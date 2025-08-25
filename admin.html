@@ -21,8 +21,9 @@
       max-width:800px;
       width:100%;
     }
-    h1 { text-align:center; margin-bottom:20px; color:#333; }
-    input, select {
+    h1, h2 { margin-bottom:20px; color:#333; text-align:center; }
+
+    input, select, textarea {
       width:100%;
       padding:12px;
       margin:8px 0;
@@ -31,7 +32,7 @@
       font-size:15px;
     }
     button {
-      padding:12px 18px;
+      padding:10px 15px;
       background:#4e73df;
       border:none;
       border-radius:8px;
@@ -39,7 +40,6 @@
       font-size:15px;
       font-weight:600;
       cursor:pointer;
-      margin-top:8px;
       transition:0.3s;
     }
     button:hover { background:#2e59d9; }
@@ -50,39 +50,33 @@
       border-radius:10px;
       margin-bottom:15px;
       box-shadow:0 2px 5px rgba(0,0,0,.1);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
     }
-    .pedido-card strong { font-size:16px; }
-    .pedido-card em { font-weight:600; }
+    .pedido-info { flex:1; }
+    .pedido img { max-width:80px; border-radius:8px; margin-left:10px; }
 
-    .topo {
-      text-align:center;
-      margin-bottom:25px;
-    }
-    .logout {
-      margin-top:15px;
-      text-align:center;
-    }
+    .actions button { margin-left:5px; }
   </style>
 </head>
 <body>
-  <!-- Login do admin -->
-  <div id="login" class="card" style="max-width:400px; text-align:center;">
-    <h2>🔑 Login do Admin</h2>
-    <input type="password" id="senha" placeholder="Senha do Admin">
+  <!-- Tela de login -->
+  <div id="login" class="card" style="max-width:400px;">
+    <h2>🔑 Acesso do Dono</h2>
+    <input type="password" id="senha" placeholder="Digite a senha">
     <button onclick="entrar()">Entrar</button>
   </div>
 
   <!-- Painel do dono -->
   <div id="painel" class="card" style="display:none;">
-    <div class="topo">
-      <h1>📋 Pedidos - Painel do Dono</h1>
-      <p>Gerencie todos os pedidos aqui</p>
-    </div>
+    <h1>📦 Painel do Dono</h1>
 
-    <h3>➕ Novo Pedido</h3>
+    <!-- Formulário -->
+    <h2>Criar Pedido</h2>
     <input type="text" id="nome" placeholder="Nome do cliente">
     <input type="text" id="cpf" maxlength="4" placeholder="Últimos 4 dígitos do CPF">
-    <input type="text" id="desc" placeholder="Descrição do pedido">
+    <textarea id="desc" placeholder="Descrição do pedido"></textarea>
     <input type="file" id="foto" accept="image/*">
     <select id="status">
       <option value="Criado">Criado</option>
@@ -91,22 +85,20 @@
       <option value="Saiu para instalação">Saiu para instalação</option>
       <option value="Entregue na loja">Entregue na loja</option>
     </select>
-    <button onclick="adicionarPedido()">Adicionar Pedido</button>
+    <button onclick="salvarPedido()">Salvar Pedido</button>
 
-    <h3 style="margin-top:25px;">📦 Pedidos Registrados</h3>
+    <!-- Lista de pedidos -->
+    <h2>Meus Pedidos</h2>
     <div id="lista-pedidos"></div>
-
-    <div class="logout">
-      <button style="background:#e63946;" onclick="sair()">Sair</button>
-    </div>
   </div>
 
   <script>
-    const senhaCorreta = "Batista2025";
+    const SENHA = "Batista2025";
+    let editandoId = null;
 
     function entrar(){
       const senha = document.getElementById("senha").value;
-      if(senha === senhaCorreta){
+      if(senha === SENHA){
         document.getElementById("login").style.display="none";
         document.getElementById("painel").style.display="block";
         carregarPedidos();
@@ -115,75 +107,115 @@
       }
     }
 
-    function sair(){
-      document.getElementById("painel").style.display="none";
-      document.getElementById("login").style.display="block";
-      document.getElementById("senha").value = "";
-    }
-
-    function adicionarPedido(){
+    function salvarPedido(){
+      let pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
       const nome = document.getElementById("nome").value.trim();
       const cpf = document.getElementById("cpf").value.trim();
       const desc = document.getElementById("desc").value.trim();
       const status = document.getElementById("status").value;
       const fotoInput = document.getElementById("foto");
-      let fotoURL = "";
 
-      if(fotoInput.files.length > 0){
-        const reader = new FileReader();
-        reader.onload = function(e){
-          fotoURL = e.target.result;
-          salvarPedido(nome, cpf, desc, status, fotoURL);
-        };
-        reader.readAsDataURL(fotoInput.files[0]);
-      } else {
-        salvarPedido(nome, cpf, desc, status, "");
-      }
-    }
-
-    function salvarPedido(nome, cpf, desc, status, foto){
       if(!nome || !cpf || !desc){
         alert("Preencha todos os campos!");
         return;
       }
 
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      pedidos.push({nome, cpf, desc, status, foto});
-      localStorage.setItem("pedidos", JSON.stringify(pedidos));
+      if(editandoId !== null){
+        // Editar
+        pedidos[editandoId].nome = nome;
+        pedidos[editandoId].cpf = cpf;
+        pedidos[editandoId].desc = desc;
+        pedidos[editandoId].status = status;
 
-      document.getElementById("nome").value="";
-      document.getElementById("cpf").value="";
-      document.getElementById("desc").value="";
-      document.getElementById("foto").value="";
-      document.getElementById("status").value="Criado";
+        if(fotoInput.files[0]){
+          const reader = new FileReader();
+          reader.onload = function(e){
+            pedidos[editandoId].foto = e.target.result;
+            localStorage.setItem("pedidos", JSON.stringify(pedidos));
+            carregarPedidos();
+            limparFormulario();
+          }
+          reader.readAsDataURL(fotoInput.files[0]);
+        } else {
+          localStorage.setItem("pedidos", JSON.stringify(pedidos));
+          carregarPedidos();
+          limparFormulario();
+        }
 
-      carregarPedidos();
+        editandoId = null;
+      } else {
+        // Criar
+        const novoPedido = {nome, cpf, desc, status, foto:""};
+        if(fotoInput.files[0]){
+          const reader = new FileReader();
+          reader.onload = function(e){
+            novoPedido.foto = e.target.result;
+            pedidos.push(novoPedido);
+            localStorage.setItem("pedidos", JSON.stringify(pedidos));
+            carregarPedidos();
+            limparFormulario();
+          }
+          reader.readAsDataURL(fotoInput.files[0]);
+        } else {
+          pedidos.push(novoPedido);
+          localStorage.setItem("pedidos", JSON.stringify(pedidos));
+          carregarPedidos();
+          limparFormulario();
+        }
+      }
     }
 
     function carregarPedidos(){
       const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
       const lista = document.getElementById("lista-pedidos");
       lista.innerHTML = "";
-
-      pedidos.forEach((p, index)=>{
+      if(pedidos.length === 0){
+        lista.innerHTML = "<p>Nenhum pedido criado ainda.</p>";
+      }
+      pedidos.forEach((p, i)=>{
         const div = document.createElement("div");
         div.className="pedido-card";
         div.innerHTML = `
-          <strong>${p.nome}</strong> - CPF: ****${p.cpf}<br>
-          ${p.desc}<br>
-          <em>Status: ${p.status}</em><br>
-          ${p.foto ? `<img src="${p.foto}" style="max-width:100px; border-radius:6px; margin-top:8px;">` : ""}
-          <br><button style="background:#dc2626; margin-top:10px;" onclick="removerPedido(${index})">Remover</button>
+          <div class="pedido-info">
+            <strong>${p.nome}</strong> - CPF: ****${p.cpf}<br>
+            ${p.desc}<br>
+            <em>Status: ${p.status}</em>
+          </div>
+          ${p.foto ? `<img src="${p.foto}">` : ""}
+          <div class="actions">
+            <button onclick="editarPedido(${i})">✏️</button>
+            <button onclick="excluirPedido(${i})">🗑️</button>
+          </div>
         `;
         lista.appendChild(div);
       });
     }
 
-    function removerPedido(index){
+    function editarPedido(id){
       const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      pedidos.splice(index,1);
-      localStorage.setItem("pedidos", JSON.stringify(pedidos));
-      carregarPedidos();
+      const p = pedidos[id];
+      document.getElementById("nome").value = p.nome;
+      document.getElementById("cpf").value = p.cpf;
+      document.getElementById("desc").value = p.desc;
+      document.getElementById("status").value = p.status;
+      editandoId = id;
+    }
+
+    function excluirPedido(id){
+      if(confirm("Tem certeza que deseja excluir este pedido?")){
+        let pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
+        pedidos.splice(id,1);
+        localStorage.setItem("pedidos", JSON.stringify(pedidos));
+        carregarPedidos();
+      }
+    }
+
+    function limparFormulario(){
+      document.getElementById("nome").value="";
+      document.getElementById("cpf").value="";
+      document.getElementById("desc").value="";
+      document.getElementById("foto").value="";
+      document.getElementById("status").value="Criado";
     }
   </script>
 </body>
