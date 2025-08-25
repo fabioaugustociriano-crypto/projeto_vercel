@@ -1,112 +1,134 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Painel do Dono - Pedidos</title>
-<style>
-  body{font-family:Arial,Helvetica,sans-serif;background:#f6f8fb;color:#222;margin:0;padding:20px}
-  .container{max-width:1000px;margin:20px auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-  h1{margin-top:0}
-  input,textarea,select,button{padding:8px;margin:5px 0;border:1px solid #ccc;border-radius:6px}
-  button{cursor:pointer;background:#0070f3;color:#fff;border:none}
-  button:hover{background:#0059c1}
-  table{width:100%;border-collapse:collapse;margin-top:15px}
-  th,td{border:1px solid #ddd;padding:8px;text-align:left;font-size:14px}
-  th{background:#f0f0f0}
-  .small{font-size:12px;color:#555}
-  img{max-width:80px;border-radius:6px;margin-top:4px}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Painel do Dono - Pedidos</title>
+  <style>
+    body {font-family: Arial, Helvetica, sans-serif; background:#f6f8fb; color:#222; margin:0; padding:20px;}
+    .container {max-width:1000px; margin:20px auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.1);}
+    h1 {text-align:center;}
+    .pedido {border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;}
+    .pedido-info {flex:1;}
+    .pedido img {max-width:80px; max-height:80px; margin-left:10px; border-radius:6px;}
+    .btn {padding:6px 10px; margin-left:5px; border:none; border-radius:6px; cursor:pointer;}
+    .btn-editar {background:#007bff; color:#fff;}
+    .btn-remover {background:#dc3545; color:#fff;}
+    .form-group {margin-bottom:10px;}
+    .form-group label {display:block; margin-bottom:5px;}
+    .form-group input {width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;}
+    .form-actions {text-align:right;}
+    #login {text-align:center; margin-top:100px;}
+    #login input {padding:10px; font-size:16px; width:200px;}
+    #login button {padding:10px 15px; font-size:16px; margin-left:10px;}
+  </style>
 </head>
 <body>
-<div class="container">
-  <h1>Painel do Dono</h1>
-  <label>Senha Admin:</label>
-  <input type="password" id="adminPass"/>
-  <hr>
-  <h3>Novo Pedido</h3>
-  <input id="createName" placeholder="Nome"/>
-  <input id="createCpf" placeholder="CPF"/>
-  <textarea id="createDesc" placeholder="Descrição"></textarea>
-  <label>Foto (opcional)</label>
-  <input id="createPhoto" type="file" accept="image/*"/>
-  <br>
-  <button id="createBtn">Criar Pedido</button>
-  <div id="msg"></div>
-  <hr>
-  <h3>Lista de Pedidos</h3>
-  <table id="ordersTable">
-    <thead><tr><th>Código</th><th>Nome</th><th>CPF</th><th>Descrição</th><th>Status</th><th>Foto</th><th>Ações</th></tr></thead>
-    <tbody></tbody>
-  </table>
-</div>
-<script>
-const ADMIN_PASS="1234";
-function loadOrders(){return JSON.parse(localStorage.getItem('orders')||'[]')}
-function saveOrders(o){localStorage.setItem('orders',JSON.stringify(o))}
-function digitsOnly(v){return v.replace(/\D/g,'')}
-function validateCPF(str){return str.length===11}
-function generateCode(name,cpf){return name.substring(0,3).toUpperCase()+cpf.slice(-3)+Date.now().toString().slice(-3)}
-function showMessage(m,s){document.getElementById('msg').textContent=m;document.getElementById('msg').style.color=s?'green':'red'}
-function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)})}
-async function createOrder(){
-  const pass=document.getElementById('adminPass').value
-  if(pass!==ADMIN_PASS){showMessage('Senha incorreta',false);return}
-  const name=document.getElementById('createName').value.trim()
-  const cpf=digitsOnly(document.getElementById('createCpf').value)
-  const desc=document.getElementById('createDesc').value.trim()
-  const file=document.getElementById('createPhoto').files[0]
-  if(!name||!cpf){showMessage('Informe nome e CPF',false);return}
-  if(!validateCPF(cpf)){showMessage('CPF inválido',false);return}
-  let photo=null;if(file) photo=await fileToBase64(file)
-  const orders=loadOrders()
-  let code=generateCode(name,cpf)
-  if(orders.some(o=>o.code===code)) code+=Date.now().toString().slice(-4)
-  const now=new Date().toISOString()
-  const order={id:Date.now(),code,name,cpf,description:desc,status:'criado',photo,createdAt:now,updatedAt:now}
-  orders.unshift(order)
-  saveOrders(orders)
-  showMessage('Pedido criado: '+code,true)
-  renderList()
-}
-function renderList(){
-  const tbody=document.querySelector('#ordersTable tbody')
-  tbody.innerHTML=''
-  const orders=loadOrders()
-  orders.forEach(o=>{
-    const tr=document.createElement('tr')
-    tr.innerHTML=`<td>${o.code}</td><td>${o.name}</td><td>${o.cpf}</td>
-      <td>${o.description||''}</td>
-      <td><select data-id="${o.id}">
-        <option ${o.status==='criado'?'selected':''}>criado</option>
-        <option ${o.status==='andamento'?'selected':''}>andamento</option>
-        <option ${o.status==='finalizado'?'selected':''}>finalizado</option>
-        <option ${o.status==='cancelado'?'selected':''}>cancelado</option>
-      </select></td>
-      <td>${o.photo?`<img src="${o.photo}"/>`:''}
-        <input type="file" data-file="${o.id}" accept="image/*"/></td>
-      <td><button data-del="${o.id}">Remover</button></td>`
-    tbody.appendChild(tr)
-  })
-  document.querySelectorAll('select[data-id]').forEach(sel=>{
-    sel.addEventListener('change',()=>{
-      const id=+sel.dataset.id;const orders=loadOrders();const o=orders.find(x=>x.id===id)
-      o.status=sel.value;o.updatedAt=new Date().toISOString();saveOrders(orders)})
-  })
-  document.querySelectorAll('input[data-file]').forEach(inp=>{
-    inp.addEventListener('change',async()=>{
-      const file=inp.files[0];if(!file)return;const base64=await fileToBase64(file)
-      const id=+inp.dataset.file;const orders=loadOrders();const o=orders.find(x=>x.id===id)
-      o.photo=base64;o.updatedAt=new Date().toISOString();saveOrders(orders);renderList()})
-  })
-  document.querySelectorAll('button[data-del]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const id=+btn.dataset.del;let orders=loadOrders();orders=orders.filter(x=>x.id!==id)
-      saveOrders(orders);renderList()})
-  })
-}
-document.getElementById('createBtn').addEventListener('click',createOrder)
-renderList()
-</script>
+  <div id="login">
+    <h2>Login do Dono</h2>
+    <input type="password" id="senha" placeholder="Digite a senha">
+    <button onclick="fazerLogin()">Entrar</button>
+  </div>
+
+  <div id="painel" style="display:none;">
+    <div class="container">
+      <h1>Painel do Dono - Pedidos</h1>
+
+      <div id="lista-pedidos"></div>
+
+      <h2>Adicionar Pedido</h2>
+      <div class="form-group">
+        <label>Nome do Cliente:</label>
+        <input type="text" id="nomeCliente">
+      </div>
+      <div class="form-group">
+        <label>Descrição do Pedido:</label>
+        <input type="text" id="descPedido">
+      </div>
+      <div class="form-group">
+        <label>Status:</label>
+        <input type="text" id="statusPedido">
+      </div>
+      <div class="form-group">
+        <label>Foto (URL):</label>
+        <input type="text" id="fotoPedido">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-editar" onclick="adicionarPedido()">Adicionar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function fazerLogin(){
+      const senha = document.getElementById("senha").value;
+      if(senha === "Batista2025"){
+        document.getElementById("login").style.display="none";
+        document.getElementById("painel").style.display="block";
+      } else {
+        alert("Senha incorreta!");
+      }
+    }
+
+    function carregarPedidos(){
+      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
+      const lista = document.getElementById("lista-pedidos");
+      lista.innerHTML = "";
+      pedidos.forEach((p,i)=>{
+        const div = document.createElement("div");
+        div.className="pedido";
+        div.innerHTML = `
+          <div class="pedido-info">
+            <strong>${p.nome}</strong><br>
+            ${p.desc}<br>
+            <em>Status: ${p.status}</em>
+          </div>
+          ${p.foto ? `<img src="${p.foto}" alt="foto">` : ""}
+          <div>
+            <button class="btn btn-editar" onclick="editarPedido(${i})">Editar</button>
+            <button class="btn btn-remover" onclick="removerPedido(${i})">Remover</button>
+          </div>
+        `;
+        lista.appendChild(div);
+      });
+    }
+
+    function adicionarPedido(){
+      const nome = document.getElementById("nomeCliente").value;
+      const desc = document.getElementById("descPedido").value;
+      const status = document.getElementById("statusPedido").value;
+      const foto = document.getElementById("fotoPedido").value;
+      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
+      pedidos.push({nome, desc, status, foto});
+      localStorage.setItem("pedidos", JSON.stringify(pedidos));
+      carregarPedidos();
+      document.getElementById("nomeCliente").value="";
+      document.getElementById("descPedido").value="";
+      document.getElementById("statusPedido").value="";
+      document.getElementById("fotoPedido").value="";
+    }
+
+    function editarPedido(i){
+      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
+      const p = pedidos[i];
+      const novoStatus = prompt("Editar status do pedido:", p.status);
+      if(novoStatus!==null){
+        p.status = novoStatus;
+        localStorage.setItem("pedidos", JSON.stringify(pedidos));
+        carregarPedidos();
+      }
+    }
+
+    function removerPedido(i){
+      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
+      if(confirm("Deseja remover este pedido?")){
+        pedidos.splice(i,1);
+        localStorage.setItem("pedidos", JSON.stringify(pedidos));
+        carregarPedidos();
+      }
+    }
+
+    window.onload = carregarPedidos;
+  </script>
 </body>
 </html>
