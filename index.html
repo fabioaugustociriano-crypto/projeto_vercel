@@ -13,27 +13,63 @@
     .pedido img {max-width:80px; max-height:80px; margin-left:10px; border-radius:6px;}
     footer {margin-top:30px; text-align:center; font-size:13px; color:#666;}
     footer a {color:#666; text-decoration:none;}
+    #login {text-align:center; margin-top:100px;}
+    #login input {padding:10px; font-size:16px; margin:5px; width:200px;}
+    #login button {padding:10px 15px; font-size:16px;}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Pedidos em Andamento</h1>
-    <div id="lista-pedidos"></div>
+  <div id="login">
+    <h2>Consultar Pedido</h2>
+    <input type="text" id="nome" placeholder="Seu Nome">
+    <br>
+    <input type="text" id="cpf" maxlength="4" placeholder="Últimos 4 dígitos do CPF">
+    <br>
+    <button onclick="entrar()">Ver meus pedidos</button>
   </div>
 
-  <footer>
-    <a href="/admin">🔑 Sou o dono (acessar painel)</a>
-  </footer>
+  <div id="areaPedidos" style="display:none;">
+    <div class="container">
+      <h1>Meus Pedidos</h1>
+      <div id="lista-pedidos"></div>
+    </div>
+    <footer>
+      <a href="/admin">🔑 Sou o dono (acessar painel)</a>
+    </footer>
+  </div>
 
   <script>
+    let usuarioNome = "";
+    let usuarioCpf = "";
+
+    function entrar(){
+      usuarioNome = document.getElementById("nome").value.trim();
+      usuarioCpf = document.getElementById("cpf").value.trim();
+
+      if(!usuarioNome || !usuarioCpf){
+        alert("Preencha o nome e os 4 dígitos do CPF!");
+        return;
+      }
+
+      document.getElementById("login").style.display="none";
+      document.getElementById("areaPedidos").style.display="block";
+      carregarPedidos();
+    }
+
     function carregarPedidos(){
       const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
       const lista = document.getElementById("lista-pedidos");
       lista.innerHTML = "";
-      if(pedidos.length === 0){
-        lista.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+
+      const pedidosCliente = pedidos.filter(p => 
+        p.nome.toLowerCase() === usuarioNome.toLowerCase() && p.cpf === usuarioCpf
+      );
+
+      if(pedidosCliente.length === 0){
+        lista.innerHTML = "<p>Nenhum pedido encontrado para você.</p>";
       }
-      pedidos.forEach((p)=>{
+
+      pedidosCliente.forEach((p)=>{
         const div = document.createElement("div");
         div.className="pedido";
         div.innerHTML = `
@@ -47,7 +83,6 @@
         lista.appendChild(div);
       });
     }
-    window.onload = carregarPedidos;
   </script>
 </body>
 </html>
