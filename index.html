@@ -3,147 +3,93 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Área do Cliente - Pedidos</title>
+  <title>Consulta de Pedidos</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #74ebd5 0%, #9face6 100%);
+      font-family:'Poppins',sans-serif;
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
       margin:0; padding:0;
       display:flex; justify-content:center; align-items:center;
       min-height:100vh;
+      color:#333;
     }
     .card {
       background:#fff;
       padding:30px;
       border-radius:15px;
       box-shadow:0 6px 15px rgba(0,0,0,.15);
-      max-width:420px;
+      max-width:400px;
       width:100%;
       text-align:center;
     }
-    h1, h2 { margin-bottom:20px; color:#333; }
+    h1 { margin-bottom:20px; }
     input {
-      width:90%;
-      padding:12px;
-      margin:8px 0;
-      border:1px solid #ddd;
-      border-radius:8px;
-      font-size:15px;
+      width:100%; padding:12px; margin:8px 0;
+      border:1px solid #ddd; border-radius:8px; font-size:15px;
     }
     button {
-      width:95%;
-      padding:12px;
-      background:#4e73df;
-      border:none;
-      border-radius:8px;
-      color:#fff;
-      font-size:16px;
-      font-weight:600;
-      cursor:pointer;
-      transition:0.3s;
+      padding:10px 15px; background:#4e73df; border:none;
+      border-radius:8px; color:#fff; font-weight:600;
+      cursor:pointer; transition:0.3s;
+      width:100%; margin-top:10px;
     }
     button:hover { background:#2e59d9; }
-
-    /* Cards dos pedidos */
-    .pedido-card {
-      background:#f9f9f9;
-      padding:15px;
-      border-radius:10px;
-      margin-bottom:15px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      box-shadow:0 2px 5px rgba(0,0,0,.1);
-      text-align:left;
-    }
-    .pedido-info strong { font-size:16px; color:#222; }
-    .pedido-info em { font-size:14px; font-weight:600; display:block; margin-top:6px; }
-    .pedido img { max-width:80px; border-radius:8px; }
-
-    /* Status coloridos */
-    .status-criado { color:#1d4ed8; }
-    .status-producao { color:#f97316; }
-    .status-entrega { color:#eab308; }
-    .status-instalacao { color:#8b5cf6; }
-    .status-loja { color:#10b981; }
-
+    #resultado { margin-top:20px; text-align:left; }
+    #resultado img { max-width:100%; border-radius:8px; margin-top:10px; }
     footer {
-      margin-top:20px;
+      margin-top:30px;
       font-size:13px;
+      color:#555;
     }
-    footer a { color:#555; text-decoration:none; }
+    footer a {
+      color:#4e73df;
+      text-decoration:none;
+      font-weight:600;
+    }
+    footer a:hover {
+      text-decoration:underline;
+    }
   </style>
 </head>
 <body>
-  <!-- Tela de login -->
-  <div id="login" class="card">
-    <h2>🔍 Consultar Pedido</h2>
-    <input type="text" id="nome" placeholder="Seu Nome">
+  <div class="card">
+    <h1>🔍 Consultar Pedido</h1>
+    <input type="text" id="nome" placeholder="Digite seu nome">
     <input type="text" id="cpf" maxlength="4" placeholder="Últimos 4 dígitos do CPF">
-    <button onclick="entrar()">Ver meus pedidos</button>
-  </div>
+    <button onclick="consultar()">Consultar</button>
 
-  <!-- Área de pedidos -->
-  <div id="areaPedidos" class="card" style="display:none; max-width:600px;">
-    <h1>📦 Meus Pedidos</h1>
-    <div id="lista-pedidos"></div>
+    <div id="resultado"></div>
+
     <footer>
-      <a href="admin.html">🔑 Sou o dono (Acessar Painel)</a>
+      <p>⚙️ <a href="admin.html">Acesso do Dono</a></p>
     </footer>
   </div>
 
   <script>
-    let usuarioNome = "";
-    let usuarioCpf = "";
+    function consultar(){
+      const nome = document.getElementById("nome").value.trim();
+      const cpf = document.getElementById("cpf").value.trim();
+      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
+      const resultado = document.getElementById("resultado");
 
-    function entrar(){
-      usuarioNome = document.getElementById("nome").value.trim();
-      usuarioCpf = document.getElementById("cpf").value.trim();
-
-      if(!usuarioNome || !usuarioCpf){
-        alert("Preencha o nome e os 4 dígitos do CPF!");
+      if(!nome || !cpf){
+        resultado.innerHTML = "<p style='color:red'>Preencha os dois campos!</p>";
         return;
       }
 
-      document.getElementById("login").style.display="none";
-      document.getElementById("areaPedidos").style.display="block";
-      carregarPedidos();
-    }
-
-    function carregarPedidos(){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      const lista = document.getElementById("lista-pedidos");
-      lista.innerHTML = "";
-
-      const pedidosCliente = pedidos.filter(p => 
-        p.nome.toLowerCase() === usuarioNome.toLowerCase() && p.cpf === usuarioCpf
-      );
-
-      if(pedidosCliente.length === 0){
-        lista.innerHTML = "<p>Nenhum pedido encontrado para você.</p>";
-      }
-
-      pedidosCliente.forEach((p)=>{
-        let statusClass = "";
-        if(p.status === "Criado") statusClass="status-criado";
-        else if(p.status === "Em produção") statusClass="status-producao";
-        else if(p.status === "Saiu para entrega") statusClass="status-entrega";
-        else if(p.status === "Saiu para instalação") statusClass="status-instalacao";
-        else if(p.status === "Entregue na loja") statusClass="status-loja";
-
-        const div = document.createElement("div");
-        div.className="pedido-card";
-        div.innerHTML = `
-          <div class="pedido-info">
-            <strong>${p.nome}</strong><br>
-            ${p.desc}<br>
-            <em class="${statusClass}">Status: ${p.status}</em>
-          </div>
-          ${p.foto ? `<img src="${p.foto}" alt="foto">` : ""}
+      const pedido = pedidos.find(p=> p.nome.toLowerCase()===nome.toLowerCase() && p.cpf===cpf);
+      if(pedido){
+        resultado.innerHTML = `
+          <p><strong>Cliente:</strong> ${pedido.nome}</p>
+          <p><strong>CPF:</strong> ****${pedido.cpf}</p>
+          <p><strong>Descrição:</strong> ${pedido.desc}</p>
+          <p><strong>Status:</strong> ${pedido.status}</p>
+          ${pedido.foto ? `<img src="${pedido.foto}">` : ""}
         `;
-        lista.appendChild(div);
-      });
+      } else {
+        resultado.innerHTML = "<p style='color:red'>❌ Pedido não encontrado.</p>";
+      }
     }
   </script>
 </body>
