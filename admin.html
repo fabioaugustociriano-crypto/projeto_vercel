@@ -16,7 +16,7 @@
     .btn-remover {background:#dc3545; color:#fff;}
     .form-group {margin-bottom:10px;}
     .form-group label {display:block; margin-bottom:5px;}
-    .form-group input {width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;}
+    .form-group input, .form-group select {width:100%; padding:8px; border:1px solid #ccc; border-radius:6px;}
     .form-actions {text-align:right;}
     #login {text-align:center; margin-top:100px;}
     #login input {padding:10px; font-size:16px; width:200px;}
@@ -42,12 +42,22 @@
         <input type="text" id="nomeCliente">
       </div>
       <div class="form-group">
+        <label>Últimos 4 dígitos do CPF:</label>
+        <input type="text" id="cpfCliente" maxlength="4">
+      </div>
+      <div class="form-group">
         <label>Descrição do Pedido:</label>
         <input type="text" id="descPedido">
       </div>
       <div class="form-group">
         <label>Status:</label>
-        <input type="text" id="statusPedido">
+        <select id="statusPedido">
+          <option value="Criado">Criado</option>
+          <option value="Em Produção">Em Produção</option>
+          <option value="Saiu para Entrega">Saiu para Entrega</option>
+          <option value="Saiu para Instalação">Saiu para Instalação</option>
+          <option value="Entregue na Loja">Entregue na Loja</option>
+        </select>
       </div>
       <div class="form-group">
         <label>Foto:</label>
@@ -79,7 +89,7 @@
         div.className="pedido";
         div.innerHTML = `
           <div class="pedido-info">
-            <strong>${p.nome}</strong><br>
+            <strong>${p.nome}</strong> - CPF: ****${p.cpf}<br>
             ${p.desc}<br>
             <em>Status: ${p.status}</em>
           </div>
@@ -95,28 +105,32 @@
 
     function adicionarPedido(){
       const nome = document.getElementById("nomeCliente").value;
+      const cpf = document.getElementById("cpfCliente").value;
       const desc = document.getElementById("descPedido").value;
       const status = document.getElementById("statusPedido").value;
       const fileInput = document.getElementById("fotoPedido");
       const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
 
+      if(!nome || !cpf){ alert("Preencha o nome e os 4 dígitos do CPF!"); return; }
+
       if(fileInput.files.length > 0){
         const reader = new FileReader();
         reader.onload = function(e){
-          pedidos.push({nome, desc, status, foto: e.target.result});
+          pedidos.push({nome, cpf, desc, status, foto: e.target.result});
           localStorage.setItem("pedidos", JSON.stringify(pedidos));
           carregarPedidos();
         };
         reader.readAsDataURL(fileInput.files[0]);
       } else {
-        pedidos.push({nome, desc, status, foto:""});
+        pedidos.push({nome, cpf, desc, status, foto:""});
         localStorage.setItem("pedidos", JSON.stringify(pedidos));
         carregarPedidos();
       }
 
       document.getElementById("nomeCliente").value="";
+      document.getElementById("cpfCliente").value="";
       document.getElementById("descPedido").value="";
-      document.getElementById("statusPedido").value="";
+      document.getElementById("statusPedido").value="Criado";
       document.getElementById("fotoPedido").value="";
     }
 
