@@ -1,65 +1,53 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Rastreamento de Pedido</title>
-<style>
-  body{font-family:Arial,Helvetica,sans-serif;background:#f6f8fb;color:#222;margin:0;padding:20px}
-  .container{max-width:800px;margin:20px auto;background:#fff;padding:20px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-  h1{margin-top:0}
-  input,button{padding:10px;margin:5px 0;border:1px solid #ccc;border-radius:6px}
-  button{cursor:pointer;background:#0070f3;color:#fff;border:none}
-  button:hover{background:#0059c1}
-  .result{margin-top:20px;padding:15px;border:1px solid #ddd;border-radius:8px;background:#fafafa}
-  .badge{display:inline-block;padding:4px 10px;border-radius:12px;font-size:12px;color:#fff}
-  .criado{background:#888}
-  .andamento{background:#0070f3}
-  .finalizado{background:#00a650}
-  .cancelado{background:#d32f2f}
-  .small{font-size:12px;color:#555}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Página do Cliente - Pedidos</title>
+  <style>
+    body {font-family: Arial, Helvetica, sans-serif; background:#f6f8fb; color:#222; margin:0; padding:20px;}
+    .container {max-width:800px; margin:20px auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.1);}
+    h1 {text-align:center;}
+    .pedido {border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;}
+    .pedido-info {flex:1;}
+    .pedido img {max-width:80px; max-height:80px; margin-left:10px; border-radius:6px;}
+    footer {margin-top:30px; text-align:center; font-size:13px; color:#666;}
+    footer a {color:#666; text-decoration:none;}
+  </style>
 </head>
 <body>
-<div class="container">
-  <h1>Rastreamento de Pedido</h1>
-  <p>Digite o código ou CPF:</p>
-  <input id="search" placeholder="Código ou CPF"/>
-  <button id="btn">Buscar</button>
-  <div id="result"></div>
-</div>
-<script>
-function loadOrders(){return JSON.parse(localStorage.getItem('orders')||'[]')}
-function digitsOnly(v){return v.replace(/\D/g,'')}
-function renderOrder(o){
-  const statusClass=o.status.replace(/\s/g,'').replace('ê','e')
-  resultEl.innerHTML=`
-    <div class="result">
-      <h3>Pedido: ${o.code}</h3>
-      <div><strong>Nome:</strong> ${o.name}</div>
-      <div><strong>CPF:</strong> ${o.cpf}</div>
-      <div><strong>Descrição:</strong> ${o.description||'-'}</div>
-      ${o.photo?`<div><strong>Foto:</strong><br><img src="${o.photo}" style="max-width:200px;border-radius:10px"/></div>`:''}
-      <div><strong>Status:</strong> <span class="badge ${statusClass}">${o.status}</span></div>
-      <div class="small">Criado: ${new Date(o.createdAt).toLocaleString()} • Atualizado: ${new Date(o.updatedAt).toLocaleString()}</div>
-    </div>`
-}
-const btn=document.getElementById('btn')
-const resultEl=document.getElementById('result')
-btn.addEventListener('click',()=>{
-  const term=document.getElementById('search').value.trim()
-  if(!term){resultEl.textContent='Digite algo.';return}
-  const orders=loadOrders()
-  const cpf=digitsOnly(term)
-  const found=orders.find(o=>o.code===term||o.cpf===cpf)
-  if(found) renderOrder(found)
-  else resultEl.textContent='Nenhum pedido encontrado.'
-})
-</script>
-  <footer style="margin-top:30px;text-align:center;font-size:13px;color:#666">
-  <a href="/admin" style="color:#666;text-decoration:none">
-    🔑 Sou o dono (acessar painel)
-  </a>
-</footer>
+  <div class="container">
+    <h1>Pedidos em Andamento</h1>
+    <div id="lista-pedidos"></div>
+  </div>
+
+  <footer>
+    <a href="/admin">🔑 Sou o dono (acessar painel)</a>
+  </footer>
+
+  <script>
+    function carregarPedidos(){
+      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
+      const lista = document.getElementById("lista-pedidos");
+      lista.innerHTML = "";
+      if(pedidos.length === 0){
+        lista.innerHTML = "<p>Nenhum pedido encontrado.</p>";
+      }
+      pedidos.forEach((p)=>{
+        const div = document.createElement("div");
+        div.className="pedido";
+        div.innerHTML = `
+          <div class="pedido-info">
+            <strong>${p.nome}</strong><br>
+            ${p.desc}<br>
+            <em>Status: ${p.status}</em>
+          </div>
+          ${p.foto ? `<img src="${p.foto}" alt="foto">` : ""}
+        `;
+        lista.appendChild(div);
+      });
+    }
+    window.onload = carregarPedidos;
+  </script>
 </body>
 </html>
