@@ -79,11 +79,27 @@
     <img id="modal-img" src="">
   </div>
 
-  <script>
-    function consultar(){
-      const nome = document.getElementById("nome").value.trim();
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv_JfhkboDI7Iqo1tcV7hP2R94W5U-UFw",
+      authDomain: "saron-cortinas.firebaseapp.com",
+      databaseURL: "https://saron-cortinas-default-rtdb.firebaseio.com",
+      projectId: "saron-cortinas",
+      storageBucket: "saron-cortinas.firebasestorage.app",
+      messagingSenderId: "1004919070090",
+      appId: "1:1004919070090:web:6162c6accfe1d418cb7c73"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    async function consultar(){
+      const nome = document.getElementById("nome").value.trim().toLowerCase();
       const cpf = document.getElementById("cpf").value.trim();
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
       const resultado = document.getElementById("resultado");
 
       if(!nome || !cpf){
@@ -91,25 +107,38 @@
         return;
       }
 
-      const pedido = pedidos.find(p=> p.nome.toLowerCase()===nome.toLowerCase() && p.cpf===cpf);
-      if(pedido){
-        resultado.innerHTML = `
-          <p><strong>Cliente:</strong> ${pedido.nome}</p>
-          <p><strong>CPF:</strong> ****${pedido.cpf}</p>
-          <p><strong>Descrição:</strong> ${pedido.desc}</p>
-          <p><strong>Status:</strong> ${pedido.status}</p>
-          ${pedido.foto ? `<img src="${pedido.foto}" class="thumb" onclick="abrirModal('${pedido.foto}')">` : ""}
-          ${pedido.pdf ? `<a href="${pedido.pdf}" target="_blank" class="pdf-link">📄 Ver PDF</a>` : ""}
-        `;
+      const snapshot = await get(ref(db,"pedidos"));
+      if(snapshot.exists()){
+        let encontrado = null;
+        snapshot.forEach(childSnap=>{
+          const p = childSnap.val();
+          if(p.nome.toLowerCase()===nome && p.cpf===cpf){
+            encontrado = p;
+          }
+        });
+        if(encontrado){
+          resultado.innerHTML = `
+            <p><strong>Cliente:</strong> ${encontrado.nome}</p>
+            <p><strong>CPF:</strong> ****${encontrado.cpf}</p>
+            <p><strong>Descrição:</strong> ${encontrado.desc}</p>
+            <p><strong>Status:</strong> ${encontrado.status}</p>
+            ${encontrado.foto ? `<img src="${encontrado.foto}" class="thumb" onclick="abrirModal('${encontrado.foto}')">` : ""}
+            ${encontrado.pdf ? `<a href="${encontrado.pdf}" target="_blank" class="pdf-link">📄 Ver PDF</a>` : ""}
+          `;
+        } else {
+          resultado.innerHTML = "<p style='color:red'>❌ Pedido não encontrado.</p>";
+        }
       } else {
-        resultado.innerHTML = "<p style='color:red'>❌ Pedido não encontrado.</p>";
+        resultado.innerHTML = "<p style='color:red'>❌ Nenhum pedido cadastrado.</p>";
       }
     }
+    window.consultar = consultar;
 
     function abrirModal(src){
       document.getElementById("modal-img").src = src;
       document.getElementById("modal").style.display="flex";
     }
+    window.abrirModal = abrirModal;
   </script>
 </body>
 </html>
