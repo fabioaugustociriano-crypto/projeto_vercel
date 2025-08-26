@@ -190,7 +190,7 @@
               <td>${p.foto ? `<img src="${p.foto}" class="thumb" onclick="abrirModal('${p.foto}')">`:"-"}</td>
               <td>${p.pdf ? `<a href="${p.pdf}" target="_blank" class="pdf-link">📄 PDF</a>`:"-"}</td>
               <td>
-                <button onclick="editar('${key}')">Editar</button>
+                <button onclick="editar('${key}','${p.nome}','${p.cpf}','${p.desc}')">Editar</button>
                 <button onclick="remover('${key}')">Excluir</button>
               </td>
             </tr>`;
@@ -217,40 +217,41 @@
     }
     window.abrirModal = abrirModal;
 
-    // ---- NOVO: função editar ----
-    function editar(id){
-      const novoDesc = prompt("Digite a nova descrição:");
-      if(novoDesc === null) return;
+    // NOVA FUNÇÃO DE EDITAR
+    function editar(id,nome,cpf,desc){
+      const novoNome = prompt("Editar Nome do Cliente:", nome);
+      const novoCpf = prompt("Editar últimos 4 dígitos do CPF:", cpf);
+      const novoDesc = prompt("Editar Descrição:", desc);
 
       const fotoFile = document.getElementById("foto").files[0];
       const pdfFile = document.getElementById("pdf").files[0];
 
-      let dadosAtualizados = { desc: novoDesc };
+      let dadosAtualizados = {
+        nome: novoNome || nome,
+        cpf: novoCpf || cpf,
+        desc: novoDesc || desc
+      };
 
       if(fotoFile){
         const reader = new FileReader();
         reader.onload = e => {
           dadosAtualizados.foto = e.target.result;
-          update(ref(db, "pedidos/"+id), dadosAtualizados);
-          alert("Pedido atualizado!");
+          const pedidoRef = ref(db,"pedidos/"+id);
+          update(pedidoRef,dadosAtualizados);
         };
         reader.readAsDataURL(fotoFile);
-        return;
-      }
-
-      if(pdfFile){
+      } else if(pdfFile){
         const reader = new FileReader();
         reader.onload = e => {
           dadosAtualizados.pdf = e.target.result;
-          update(ref(db, "pedidos/"+id), dadosAtualizados);
-          alert("Pedido atualizado!");
+          const pedidoRef = ref(db,"pedidos/"+id);
+          update(pedidoRef,dadosAtualizados);
         };
         reader.readAsDataURL(pdfFile);
-        return;
+      } else {
+        const pedidoRef = ref(db,"pedidos/"+id);
+        update(pedidoRef,dadosAtualizados);
       }
-
-      update(ref(db, "pedidos/"+id), dadosAtualizados);
-      alert("Pedido atualizado!");
     }
     window.editar = editar;
   </script>
