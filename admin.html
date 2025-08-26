@@ -6,43 +6,22 @@
   <title>Painel do Dono - Saron Cortinas</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family:'Poppins',sans-serif;
-      background:linear-gradient(135deg,#b30000 0%,#444 100%);
-      margin:0; padding:20px; color:#333;
-    }
-    .container {
-      max-width:800px; margin:20px auto; background:#fff; padding:25px;
-      border-radius:15px; box-shadow:0 6px 15px rgba(0,0,0,.15);
-    }
-    h1 { text-align:center; color:#b30000; }
-    input, select {
-      width:100%; padding:12px; margin:8px 0;
-      border:1px solid #ccc; border-radius:8px; font-size:15px;
-    }
-    button {
-      padding:10px 15px; background:#b30000; border:none;
-      border-radius:8px; color:#fff; font-weight:600;
-      cursor:pointer; transition:0.3s;
-      margin:2px;
-    }
-    button:hover { background:#800000; }
-    table {
-      width:100%; margin-top:20px; border-collapse:collapse;
-    }
-    table, th, td { border:1px solid #ddd; }
-    th, td { padding:10px; text-align:center; }
-    th { background:#f5f5f5; }
-    img.thumb { max-width:80px; border-radius:5px; cursor:pointer; }
-    a.pdf-link { color:#b30000; font-weight:600; text-decoration:none; }
-    a.pdf-link:hover { text-decoration:underline; }
-    .logo { display:block; margin:0 auto 15px auto; max-width:200px; }
-    .modal {
-      display:none; position:fixed; z-index:1000; left:0; top:0;
-      width:100%; height:100%; background:rgba(0,0,0,0.8);
-      justify-content:center; align-items:center;
-    }
-    .modal img { max-width:90%; max-height:90%; border-radius:10px; }
+    body {font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#b30000 0%,#444 100%);margin:0;padding:20px;color:#333;}
+    .container {max-width:800px;margin:20px auto;background:#fff;padding:25px;border-radius:15px;box-shadow:0 6px 15px rgba(0,0,0,.15);}
+    h1 {text-align:center;color:#b30000;}
+    input, select {width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:8px;font-size:15px;}
+    button {padding:8px 12px;margin:2px;background:#b30000;border:none;border-radius:8px;color:#fff;font-weight:600;cursor:pointer;transition:0.3s;}
+    button:hover {background:#800000;}
+    table {width:100%;margin-top:20px;border-collapse:collapse;}
+    table, th, td {border:1px solid #ddd;}
+    th, td {padding:10px;text-align:center;}
+    th {background:#f5f5f5;}
+    img.thumb {max-width:80px;border-radius:5px;cursor:pointer;}
+    a.pdf-link {color:#b30000;font-weight:600;text-decoration:none;}
+    a.pdf-link:hover {text-decoration:underline;}
+    .logo {display:block;margin:0 auto 15px auto;max-width:200px;}
+    .modal {display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.8);justify-content:center;align-items:center;}
+    .modal img {max-width:90%;max-height:90%;border-radius:10px;}
   </style>
 </head>
 <body>
@@ -53,14 +32,12 @@
     <input type="password" id="senha" placeholder="Digite a senha" onkeyup="checkSenha(event)">
     <div id="painel" style="display:none">
       <h2>Criar Pedido</h2>
-      <input type="hidden" id="pedidoId">
       <input type="text" id="nome" placeholder="Nome do Cliente">
       <input type="text" id="cpf" maxlength="4" placeholder="Últimos 4 dígitos do CPF">
       <input type="text" id="desc" placeholder="Descrição do Pedido">
       <input type="file" id="foto" accept="image/*">
       <input type="file" id="pdf" accept="application/pdf">
       <button onclick="adicionar()">Adicionar Pedido</button>
-      <button onclick="salvarEdicao()" style="display:none" id="btnSalvar">Salvar Edição</button>
 
       <h2>Pedidos</h2>
       <table id="tabela">
@@ -132,17 +109,11 @@
 
       if(fotoFile){
         const reader = new FileReader();
-        reader.onload = e => {
-          pedido.foto = e.target.result;
-          salvar(pedido);
-        };
+        reader.onload = e => { pedido.foto = e.target.result; salvar(pedido); };
         reader.readAsDataURL(fotoFile);
       } else if(pdfFile){
         const reader = new FileReader();
-        reader.onload = e => {
-          pedido.pdf = e.target.result;
-          salvar(pedido);
-        };
+        reader.onload = e => { pedido.pdf = e.target.result; salvar(pedido); };
         reader.readAsDataURL(pdfFile);
       } else {
         salvar(pedido);
@@ -190,10 +161,18 @@
                   <option ${p.status==="Instalação concluida pedido finalizado"?"selected":""}>Instalação concluida pedido finalizado</option>
                 </select>
               </td>
-              <td>${p.foto ? `<img src="${p.foto}" class="thumb" onclick="abrirModal('${p.foto}')">`:"-"}</td>
-              <td>${p.pdf ? `<a href="${p.pdf}" target="_blank" class="pdf-link">📄 PDF</a>`:"-"}</td>
               <td>
-                <button onclick="editar('${key}','${p.nome}','${p.cpf}','${p.desc}')">Editar</button>
+                ${p.foto ? `<img src="${p.foto}" class="thumb" onclick="abrirModal('${p.foto}')"><br>`:"-"}
+                <button onclick="trocarFoto('${key}')">Trocar</button>
+                <button onclick="removerFoto('${key}')">Remover</button>
+              </td>
+              <td>
+                ${p.pdf ? `<a href="${p.pdf}" target="_blank" class="pdf-link">📄 PDF</a><br>`:"-"}
+                <button onclick="trocarPDF('${key}')">Trocar</button>
+                <button onclick="removerPDF('${key}')">Remover</button>
+              </td>
+              <td>
+                <button onclick="editarPedido('${key}','${p.nome}','${p.cpf}','${p.desc}')">Editar</button>
                 <button onclick="remover('${key}')">Excluir</button>
               </td>
             </tr>`;
@@ -201,55 +180,6 @@
       });
     }
     window.listar = listar;
-
-    function editar(id,nome,cpf,desc){
-      document.getElementById("pedidoId").value = id;
-      document.getElementById("nome").value = nome;
-      document.getElementById("cpf").value = cpf;
-      document.getElementById("desc").value = desc;
-      document.getElementById("btnSalvar").style.display = "inline-block";
-    }
-    window.editar = editar;
-
-    function salvarEdicao(){
-      const id = document.getElementById("pedidoId").value;
-      if(!id){ alert("Nenhum pedido selecionado!"); return; }
-
-      const nome = document.getElementById("nome").value.trim();
-      const cpf = document.getElementById("cpf").value.trim();
-      const desc = document.getElementById("desc").value.trim();
-      const fotoFile = document.getElementById("foto").files[0];
-      const pdfFile = document.getElementById("pdf").files[0];
-
-      let pedidoAtualizado = {nome, cpf, desc};
-
-      if(fotoFile){
-        const reader = new FileReader();
-        reader.onload = e => {
-          pedidoAtualizado.foto = e.target.result;
-          atualizar(id,pedidoAtualizado);
-        };
-        reader.readAsDataURL(fotoFile);
-      } else if(pdfFile){
-        const reader = new FileReader();
-        reader.onload = e => {
-          pedidoAtualizado.pdf = e.target.result;
-          atualizar(id,pedidoAtualizado);
-        };
-        reader.readAsDataURL(pdfFile);
-      } else {
-        atualizar(id,pedidoAtualizado);
-      }
-    }
-    window.salvarEdicao = salvarEdicao;
-
-    function atualizar(id,dados){
-      const pedidoRef = ref(db,"pedidos/"+id);
-      update(pedidoRef,dados);
-      alert("Pedido atualizado!");
-      document.getElementById("btnSalvar").style.display="none";
-      document.getElementById("pedidoId").value="";
-    }
 
     function atualizarStatus(id,status){
       const pedidoRef = ref(db,"pedidos/"+id);
@@ -268,6 +198,60 @@
       document.getElementById("modal").style.display="flex";
     }
     window.abrirModal = abrirModal;
+
+    // === FOTO/PDF ===
+    function trocarFoto(id){
+      const input = document.createElement("input");
+      input.type = "file"; input.accept = "image/*";
+      input.onchange = e=>{
+        const file = e.target.files[0];
+        if(file){
+          const reader = new FileReader();
+          reader.onload = ev=>{
+            update(ref(db,"pedidos/"+id),{foto:ev.target.result});
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    }
+    window.trocarFoto = trocarFoto;
+
+    function removerFoto(id){ update(ref(db,"pedidos/"+id),{foto:null}); }
+    window.removerFoto = removerFoto;
+
+    function trocarPDF(id){
+      const input = document.createElement("input");
+      input.type = "file"; input.accept = "application/pdf";
+      input.onchange = e=>{
+        const file = e.target.files[0];
+        if(file){
+          const reader = new FileReader();
+          reader.onload = ev=>{
+            update(ref(db,"pedidos/"+id),{pdf:ev.target.result});
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    }
+    window.trocarPDF = trocarPDF;
+
+    function removerPDF(id){ update(ref(db,"pedidos/"+id),{pdf:null}); }
+    window.removerPDF = removerPDF;
+
+    // === EDITAR CAMPOS ===
+    function editarPedido(id, nomeAtual, cpfAtual, descAtual){
+      const nome = prompt("Editar Nome:", nomeAtual);
+      if(nome===null) return;
+      const cpf = prompt("Editar últimos 4 dígitos do CPF:", cpfAtual);
+      if(cpf===null) return;
+      const desc = prompt("Editar Descrição:", descAtual);
+      if(desc===null) return;
+
+      update(ref(db,"pedidos/"+id), {nome, cpf, desc});
+    }
+    window.editarPedido = editarPedido;
   </script>
 </body>
 </html>
