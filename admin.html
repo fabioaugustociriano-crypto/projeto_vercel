@@ -3,194 +3,154 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Painel do Dono - Saron Cortinas</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <title>Painel do Dono - Pedidos</title>
   <style>
     body {
-      font-family:'Poppins',sans-serif;
-      background:linear-gradient(135deg,#b30000 0%,#444 100%);
-      margin:0; padding:20px; color:#333;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f6f6f6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #900;
+      padding: 10px;
+      text-align: center;
+    }
+    .logo {
+      max-width: 220px;
+      display: block;
+      margin: 0 auto;
     }
     .container {
-      max-width:800px; margin:20px auto; background:#fff; padding:25px;
-      border-radius:15px; box-shadow:0 6px 15px rgba(0,0,0,.15);
+      max-width: 800px;
+      margin: 30px auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
     }
-    h1 { text-align:center; color:#b30000; }
+    h1 {
+      color: #900;
+      margin-bottom: 20px;
+      text-align: center;
+    }
     input, select {
-      width:100%; padding:12px; margin:8px 0;
-      border:1px solid #ccc; border-radius:8px; font-size:15px;
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #aaa;
+      border-radius: 6px;
     }
     button {
-      padding:10px 15px; background:#b30000; border:none;
-      border-radius:8px; color:#fff; font-weight:600;
-      cursor:pointer; transition:0.3s;
+      background: #900;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 10px;
     }
-    button:hover { background:#800000; }
-    table {
-      width:100%; margin-top:20px; border-collapse:collapse;
+    button:hover { background: #b00; }
+    .pedido {
+      border: 1px solid #ccc;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 15px 0;
     }
-    table, th, td { border:1px solid #ddd; }
-    th, td { padding:10px; text-align:center; }
-    th { background:#f5f5f5; }
-    img.thumb {
-      max-width:80px; border-radius:5px; cursor:pointer;
+    .thumb {
+      max-width: 100px;
+      cursor: pointer;
+      margin: 5px 0;
     }
-    a.pdf-link { color:#b30000; font-weight:600; text-decoration:none; }
-    a.pdf-link:hover { text-decoration:underline; }
-    .logo { display:block; margin:0 auto 15px auto; max-width:200px; }
     .modal {
-      display:none; position:fixed; z-index:1000; left:0; top:0;
-      width:100%; height:100%; background:rgba(0,0,0,0.8);
-      justify-content:center; align-items:center;
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
     }
-    .modal img { max-width:90%; max-height:90%; border-radius:10px; }
+    .modal img {
+      max-width: 90%;
+      max-height: 90%;
+    }
   </style>
 </head>
 <body>
+  <header>
+    <img src="logo.png" alt="Saron Cortinas" class="logo">
+  </header>
   <div class="container">
-    <img src="logo.jpg" alt="Saron Cortinas" class="logo">
     <h1>Painel do Dono</h1>
+    <form id="formPedido">
+      <input type="text" placeholder="Nome do Cliente" required>
+      <input type="text" placeholder="4 últimos dígitos do CPF" maxlength="4" required>
+      <select required>
+        <option value="">Status</option>
+        <option>Criado</option>
+        <option>Em produção</option>
+        <option>Saiu para entrega</option>
+        <option>Saiu para instalação</option>
+        <option>Entregue na loja</option>
+      </select>
+      <input type="file" accept="image/*,.pdf">
+      <button type="submit">Adicionar Pedido</button>
+    </form>
 
-    <input type="password" id="senha" placeholder="Digite a senha" onkeyup="checkSenha(event)">
-    <div id="painel" style="display:none">
-      <h2>Criar Pedido</h2>
-      <input type="text" id="nome" placeholder="Nome do Cliente">
-      <input type="text" id="cpf" maxlength="4" placeholder="Últimos 4 dígitos do CPF">
-      <input type="text" id="desc" placeholder="Descrição do Pedido">
-      <input type="file" id="foto" accept="image/*">
-      <input type="file" id="pdf" accept="application/pdf">
-      <button onclick="adicionar()">Adicionar Pedido</button>
-
-      <h2>Pedidos</h2>
-      <table id="tabela">
-        <tr>
-          <th>Cliente</th>
-          <th>CPF</th>
-          <th>Descrição</th>
-          <th>Status</th>
-          <th>Foto</th>
-          <th>PDF</th>
-          <th>Ações</th>
-        </tr>
-      </table>
-    </div>
+    <div id="pedidos"></div>
   </div>
 
-  <!-- Modal Zoom -->
-  <div id="modal" class="modal" onclick="this.style.display='none'">
-    <img id="modal-img" src="">
+  <!-- Modal para zoom -->
+  <div class="modal" id="modal">
+    <img id="modalImg" src="">
   </div>
 
   <script>
-    const senhaCorreta = "Batista2025";
+    const form = document.getElementById('formPedido');
+    const pedidosDiv = document.getElementById('pedidos');
+    const modal = document.getElementById('modal');
+    const modalImg = document.getElementById('modalImg');
 
-    function checkSenha(e){
-      if(e.key === "Enter" || e.type === "click"){
-        const senha = document.getElementById("senha").value;
-        if(senha === senhaCorreta){
-          document.getElementById("senha").style.display="none";
-          document.getElementById("painel").style.display="block";
-          listar();
-        } else {
-          alert("Senha incorreta!");
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const dados = new FormData(form);
+      const pedido = document.createElement('div');
+      pedido.className = 'pedido';
+      pedido.innerHTML = `
+        <p><strong>Nome:</strong> ${dados.getAll('')[0]}</p>
+        <p><strong>CPF:</strong> ${dados.getAll('')[1]}</p>
+        <p><strong>Status:</strong> ${dados.getAll('')[2]}</p>
+      `;
+      
+      const arquivo = dados.getAll('')[3];
+      if (arquivo && arquivo.name) {
+        if (arquivo.type.startsWith('image/')) {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(arquivo);
+          img.className = 'thumb';
+          img.onclick = () => {
+            modal.style.display = 'flex';
+            modalImg.src = img.src;
+          };
+          pedido.appendChild(img);
+        } else if (arquivo.type === "application/pdf") {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(arquivo);
+          link.target = "_blank";
+          link.innerText = "📄 Ver PDF";
+          pedido.appendChild(link);
         }
       }
-    }
 
-    function adicionar(){
-      const nome = document.getElementById("nome").value.trim();
-      const cpf = document.getElementById("cpf").value.trim();
-      const desc = document.getElementById("desc").value.trim();
-      const fotoFile = document.getElementById("foto").files[0];
-      const pdfFile = document.getElementById("pdf").files[0];
+      pedidosDiv.appendChild(pedido);
+      form.reset();
+    });
 
-      if(!nome || !cpf || !desc){
-        alert("Preencha todos os campos!");
-        return;
-      }
-
-      let pedido = {nome, cpf, desc, status:"Criado", foto:null, pdf:null};
-
-      if(fotoFile){
-        const reader = new FileReader();
-        reader.onload = e => {
-          pedido.foto = e.target.result;
-          salvar(pedido);
-        };
-        reader.readAsDataURL(fotoFile);
-      } else if(pdfFile){
-        const reader = new FileReader();
-        reader.onload = e => {
-          pedido.pdf = e.target.result;
-          salvar(pedido);
-        };
-        reader.readAsDataURL(pdfFile);
-      } else {
-        salvar(pedido);
-      }
-    }
-
-    function salvar(pedido){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      pedidos.push(pedido);
-      localStorage.setItem("pedidos", JSON.stringify(pedidos));
-      listar();
-      alert("Pedido adicionado!");
-    }
-
-    function listar(){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      const tabela = document.getElementById("tabela");
-      tabela.innerHTML = `
-        <tr>
-          <th>Cliente</th>
-          <th>CPF</th>
-          <th>Descrição</th>
-          <th>Status</th>
-          <th>Foto</th>
-          <th>PDF</th>
-          <th>Ações</th>
-        </tr>`;
-      pedidos.forEach((p,i)=>{
-        tabela.innerHTML += `
-          <tr>
-            <td>${p.nome}</td>
-            <td>****${p.cpf}</td>
-            <td>${p.desc}</td>
-            <td>
-              <select onchange="atualizarStatus(${i},this.value)">
-                <option ${p.status==="Criado"?"selected":""}>Criado</option>
-                <option ${p.status==="Em produção"?"selected":""}>Em produção</option>
-                <option ${p.status==="Saiu para entrega"?"selected":""}>Saiu para entrega</option>
-                <option ${p.status==="Saiu para instalação"?"selected":""}>Saiu para instalação</option>
-                <option ${p.status==="Entregue na loja"?"selected":""}>Entregue na loja</option>
-              </select>
-            </td>
-            <td>${p.foto ? `<img src="${p.foto}" class="thumb" onclick="abrirModal('${p.foto}')">`:"-"}</td>
-            <td>${p.pdf ? `<a href="${p.pdf}" target="_blank" class="pdf-link">📄 PDF</a>`:"-"}</td>
-            <td><button onclick="remover(${i})">Excluir</button></td>
-          </tr>`;
-      });
-    }
-
-    function atualizarStatus(i,status){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      pedidos[i].status = status;
-      localStorage.setItem("pedidos", JSON.stringify(pedidos));
-      listar();
-    }
-
-    function remover(i){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      pedidos.splice(i,1);
-      localStorage.setItem("pedidos", JSON.stringify(pedidos));
-      listar();
-    }
-
-    function abrirModal(src){
-      document.getElementById("modal-img").src = src;
-      document.getElementById("modal").style.display="flex";
-    }
+    modal.onclick = () => { modal.style.display = 'none'; };
   </script>
 </body>
 </html>
