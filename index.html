@@ -50,7 +50,6 @@
     footer a { color:#b30000; text-decoration:none; font-weight:600; }
     footer a:hover { text-decoration:underline; }
     .logo { max-width:180px; }
-    /* Modal para zoom */
     .modal {
       display:none; position:fixed; z-index:1000; left:0; top:0;
       width:100%; height:100%; background:rgba(0,0,0,0.8);
@@ -74,15 +73,14 @@
     </footer>
   </div>
 
-  <!-- Modal Zoom -->
   <div id="modal" class="modal" onclick="this.style.display='none'">
     <img id="modal-img" src="">
   </div>
 
-  <!-- Firebase -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getDatabase, ref, get, child }
+      from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAv_JfhkboDI7Iqo1tcV7hP2R94W5U-UFw",
@@ -98,7 +96,7 @@
     const db = getDatabase(app);
 
     async function consultar(){
-      const nome = document.getElementById("nome").value.trim().toLowerCase();
+      const nome = document.getElementById("nome").value.trim();
       const cpf = document.getElementById("cpf").value.trim();
       const resultado = document.getElementById("resultado");
 
@@ -107,29 +105,29 @@
         return;
       }
 
-      const snapshot = await get(ref(db,"pedidos"));
+      const dbRef = ref(db);
+      const snapshot = await get(child(dbRef,"pedidos"));
       if(snapshot.exists()){
-        let encontrado = null;
-        snapshot.forEach(childSnap=>{
+        let encontrado = false;
+        snapshot.forEach((childSnap)=>{
           const p = childSnap.val();
-          if(p.nome.toLowerCase()===nome && p.cpf===cpf){
-            encontrado = p;
+          if(p.nome.toLowerCase()===nome.toLowerCase() && p.cpf===cpf){
+            encontrado = true;
+            resultado.innerHTML = `
+              <p><strong>Cliente:</strong> ${p.nome}</p>
+              <p><strong>CPF:</strong> ****${p.cpf}</p>
+              <p><strong>Descrição:</strong> ${p.desc}</p>
+              <p><strong>Status:</strong> ${p.status}</p>
+              ${p.foto ? `<img src="${p.foto}" class="thumb" onclick="abrirModal('${p.foto}')">` : ""}
+              ${p.pdf ? `<a href="${p.pdf}" target="_blank" class="pdf-link">📄 Ver PDF</a>` : ""}
+            `;
           }
         });
-        if(encontrado){
-          resultado.innerHTML = `
-            <p><strong>Cliente:</strong> ${encontrado.nome}</p>
-            <p><strong>CPF:</strong> ****${encontrado.cpf}</p>
-            <p><strong>Descrição:</strong> ${encontrado.desc}</p>
-            <p><strong>Status:</strong> ${encontrado.status}</p>
-            ${encontrado.foto ? `<img src="${encontrado.foto}" class="thumb" onclick="abrirModal('${encontrado.foto}')">` : ""}
-            ${encontrado.pdf ? `<a href="${encontrado.pdf}" target="_blank" class="pdf-link">📄 Ver PDF</a>` : ""}
-          `;
-        } else {
+        if(!encontrado){
           resultado.innerHTML = "<p style='color:red'>❌ Pedido não encontrado.</p>";
         }
       } else {
-        resultado.innerHTML = "<p style='color:red'>❌ Nenhum pedido cadastrado.</p>";
+        resultado.innerHTML = "<p style='color:red'>Nenhum pedido encontrado no sistema.</p>";
       }
     }
     window.consultar = consultar;
