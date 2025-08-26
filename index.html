@@ -2,54 +2,53 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Consulta de Pedido - Cliente</title>
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Página do Cliente - Consultar Pedido</title>
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;background:#f6f8fb;color:#222;margin:0;padding:20px;text-align:center;}
-    header{margin-bottom:20px;}
-    .logo{max-width:250px;height:auto;display:block;margin:0 auto;}
-    .container{max-width:600px;margin:0 auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
-    input,button{padding:10px;margin:10px 0;width:100%;border:1px solid #ccc;border-radius:8px;}
-    button{background:#b71c1c;color:#fff;font-weight:bold;cursor:pointer;}
-    button:hover{background:#8a1313;}
-    footer{margin-top:30px;font-size:14px;}
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f6f8fb;
+      color: #222;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .logo {
+      max-width: 200px;
+      margin-bottom: 20px;
+    }
+    footer {
+      margin-top: 20px;
+    }
+    a {
+      text-decoration: none;
+      color: #d00;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <header>
-    <img src="logo.jpg" alt="Saron Cortinas" class="logo" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<h2>Saron Cortinas</h2>');">
-  </header>
-
   <div class="container">
+    <img src="logo.jpg" alt="Saron Cortinas" class="logo">
     <h2>Consultar Pedido</h2>
-    <form id="consultaForm">
-      <input type="text" id="nomeCliente" placeholder="Digite seu nome" required>
-      <input type="text" id="cpfCliente" placeholder="Últimos 4 números do CPF" required>
+    <form>
+      <label>Nome:</label><br>
+      <input type="text" name="nome" required><br><br>
+      <label>4 últimos números do CPF:</label><br>
+      <input type="text" name="cpf" maxlength="4" required><br><br>
       <button type="submit">Consultar</button>
     </form>
-    <div id="resultado"></div>
+    <footer>
+      <p><a href="admin.html">Acesso do Dono</a></p>
+    </footer>
   </div>
-
-  <footer>
-    <p><a href="admin.html">Acesso do Dono</a></p>
-  </footer>
-
-  <script>
-    const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
-    document.getElementById("consultaForm").addEventListener("submit", function(e){
-      e.preventDefault();
-      let nome = document.getElementById("nomeCliente").value.trim().toLowerCase();
-      let cpf = document.getElementById("cpfCliente").value.trim();
-      let pedido = pedidos.find(p => p.nome.toLowerCase() === nome && p.cpf === cpf);
-      let resultado = document.getElementById("resultado");
-      if(pedido){
-        resultado.innerHTML = `<p><strong>Status:</strong> ${pedido.status}</p>
-                               ${pedido.arquivo ? `<p>Arquivo: <a href="${pedido.arquivo}" target="_blank">Ver</a></p>` : ""}`;
-      } else {
-        resultado.innerHTML = "<p>Pedido não encontrado.</p>";
-      }
-    });
-  </script>
 </body>
 </html>
