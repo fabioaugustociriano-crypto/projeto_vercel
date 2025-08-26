@@ -6,22 +6,57 @@
   <title>Consulta de Pedidos - Saron Cortinas</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body {font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#b30000 0%,#444 100%);margin:0;padding:0;display:flex;justify-content:center;align-items:center;min-height:100vh;color:#333;}
-    .card {background:#fff;padding:30px;border-radius:15px;box-shadow:0 6px 15px rgba(0,0,0,.15);max-width:420px;width:100%;text-align:center;}
-    h1 {margin:15px 0;color:#b30000;}
-    input {width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:8px;font-size:15px;}
-    button {padding:10px 15px;background:#b30000;border:none;border-radius:8px;color:#fff;font-weight:600;cursor:pointer;transition:0.3s;width:100%;margin-top:10px;}
-    button:hover {background:#800000;}
-    #resultado {margin-top:20px;text-align:left;}
-    #resultado img.thumb {max-width:120px;border-radius:8px;margin:5px;cursor:pointer;}
-    #resultado a.pdf-link {display:block;margin-top:5px;font-weight:600;color:#b30000;text-decoration:none;}
-    #resultado a.pdf-link:hover {text-decoration:underline;}
-    footer {margin-top:30px;font-size:13px;color:#555;}
-    footer a {color:#b30000;text-decoration:none;font-weight:600;}
-    footer a:hover {text-decoration:underline;}
-    .logo {max-width:180px;}
-    .modal {display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.8);justify-content:center;align-items:center;}
-    .modal img {max-width:90%;max-height:90%;border-radius:10px;}
+    body {
+      font-family:'Poppins',sans-serif;
+      background:linear-gradient(135deg,#b30000 0%,#444 100%);
+      margin:0; padding:0;
+      display:flex; justify-content:center; align-items:center;
+      min-height:100vh;
+      color:#333;
+    }
+    .card {
+      background:#fff;
+      padding:30px;
+      border-radius:15px;
+      box-shadow:0 6px 15px rgba(0,0,0,.15);
+      max-width:420px;
+      width:100%;
+      text-align:center;
+    }
+    h1 { margin:15px 0; color:#b30000; }
+    input {
+      width:100%; padding:12px; margin:8px 0;
+      border:1px solid #ccc; border-radius:8px; font-size:15px;
+    }
+    button {
+      padding:10px 15px; background:#b30000; border:none;
+      border-radius:8px; color:#fff; font-weight:600;
+      cursor:pointer; transition:0.3s;
+      width:100%; margin-top:10px;
+    }
+    button:hover { background:#800000; }
+    #resultado { margin-top:20px; text-align:left; }
+    #resultado img.thumb {
+      max-width:120px; border-radius:8px; margin-top:10px; cursor:pointer;
+    }
+    #resultado a.pdf-link {
+      display:block; margin-top:10px; font-weight:600; color:#b30000;
+      text-decoration:none;
+    }
+    #resultado a.pdf-link:hover { text-decoration:underline; }
+    footer {
+      margin-top:30px; font-size:13px; color:#555;
+    }
+    footer a { color:#b30000; text-decoration:none; font-weight:600; }
+    footer a:hover { text-decoration:underline; }
+    .logo { max-width:180px; }
+    /* Modal para zoom */
+    .modal {
+      display:none; position:fixed; z-index:1000; left:0; top:0;
+      width:100%; height:100%; background:rgba(0,0,0,0.8);
+      justify-content:center; align-items:center;
+    }
+    .modal img { max-width:90%; max-height:90%; border-radius:10px; }
   </style>
 </head>
 <body>
@@ -31,51 +66,79 @@
     <input type="text" id="nome" placeholder="Digite seu nome">
     <input type="text" id="cpf" maxlength="4" placeholder="Últimos 4 dígitos do CPF">
     <button onclick="consultar()">Consultar</button>
+
     <div id="resultado"></div>
-    <footer><p>⚙️ <a href="admin.html">Acesso do Dono</a></p></footer>
+
+    <footer>
+      <p>⚙️ <a href="admin.html">Acesso do Dono</a></p>
+    </footer>
   </div>
-  <div id="modal" class="modal" onclick="this.style.display='none'"><img id="modal-img" src=""></div>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  <!-- Modal Zoom -->
+  <div id="modal" class="modal" onclick="this.style.display='none'">
+    <img id="modal-img" src="">
+  </div>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAv_JfhkboDI7Iqo1tcV7hP2R94W5U-UFw",
-    authDomain: "saron-cortinas.firebaseapp.com",
-    databaseURL: "https://saron-cortinas-default-rtdb.firebaseio.com",
-    projectId: "saron-cortinas",
-    storageBucket: "saron-cortinas.appspot.com",
-    messagingSenderId: "1004919070090",
-    appId: "1:1004919070090:web:6162c6accfe1d418cb7c73"
-  };
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv_JfhkboDI7Iqo1tcV7hP2R94W5U-UFw",
+      authDomain: "saron-cortinas.firebaseapp.com",
+      databaseURL: "https://saron-cortinas-default-rtdb.firebaseio.com",
+      projectId: "saron-cortinas",
+      storageBucket: "saron-cortinas.firebasestorage.app",
+      messagingSenderId: "1004919070090",
+      appId: "1:1004919070090:web:6162c6accfe1d418cb7c73"
+    };
 
-  async function consultar(){
-    const nome = document.getElementById("nome").value.trim();
-    const cpf = document.getElementById("cpf").value.trim();
-    const resultado = document.getElementById("resultado");
-    if(!nome || !cpf){resultado.innerHTML="<p style='color:red'>Preencha os dois campos!</p>";return;}
-    const snapshot = await get(ref(db,"pedidos"));
-    if(snapshot.exists()){
-      const pedidos = snapshot.val();
-      let pedido = Object.values(pedidos).find(p=> p.nome.toLowerCase()===nome.toLowerCase() && p.cpf===cpf);
-      if(pedido){
-        let arquivosHTML = "";
-        if(pedido.fotos){pedido.fotos.forEach(url=>{arquivosHTML+=`<img src="${url}" class="thumb" onclick="abrirModal('${url}')">`;});}
-        if(pedido.pdfs){pedido.pdfs.forEach(url=>{arquivosHTML+=`<a href="${url}" target="_blank" class="pdf-link">📄 Ver PDF</a>`;});}
-        resultado.innerHTML=`<p><strong>Cliente:</strong> ${pedido.nome}</p>
-          <p><strong>CPF:</strong> ****${pedido.cpf}</p>
-          <p><strong>Descrição:</strong> ${pedido.desc}</p>
-          <p><strong>Status:</strong> ${pedido.status}</p>${arquivosHTML}`;
-      } else { resultado.innerHTML="<p style='color:red'>❌ Pedido não encontrado.</p>"; }
-    } else { resultado.innerHTML="<p style='color:red'>Nenhum pedido cadastrado.</p>"; }
-  }
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-  window.abrirModal=(src)=>{document.getElementById("modal-img").src=src;document.getElementById("modal").style.display="flex";};
-  window.consultar=consultar;
-</script>
+    async function consultar(){
+      const nome = document.getElementById("nome").value.trim().toLowerCase();
+      const cpf = document.getElementById("cpf").value.trim();
+      const resultado = document.getElementById("resultado");
+
+      if(!nome || !cpf){
+        resultado.innerHTML = "<p style='color:red'>Preencha os dois campos!</p>";
+        return;
+      }
+
+      const snapshot = await get(ref(db,"pedidos"));
+      if(snapshot.exists()){
+        let encontrado = null;
+        snapshot.forEach(childSnap=>{
+          const p = childSnap.val();
+          if(p.nome.toLowerCase()===nome && p.cpf===cpf){
+            encontrado = p;
+          }
+        });
+        if(encontrado){
+          resultado.innerHTML = `
+            <p><strong>Cliente:</strong> ${encontrado.nome}</p>
+            <p><strong>CPF:</strong> ****${encontrado.cpf}</p>
+            <p><strong>Descrição:</strong> ${encontrado.desc}</p>
+            <p><strong>Status:</strong> ${encontrado.status}</p>
+            ${encontrado.foto ? `<img src="${encontrado.foto}" class="thumb" onclick="abrirModal('${encontrado.foto}')">` : ""}
+            ${encontrado.pdf ? `<a href="${encontrado.pdf}" target="_blank" class="pdf-link">📄 Ver PDF</a>` : ""}
+          `;
+        } else {
+          resultado.innerHTML = "<p style='color:red'>❌ Pedido não encontrado.</p>";
+        }
+      } else {
+        resultado.innerHTML = "<p style='color:red'>❌ Nenhum pedido cadastrado.</p>";
+      }
+    }
+    window.consultar = consultar;
+
+    function abrirModal(src){
+      document.getElementById("modal-img").src = src;
+      document.getElementById("modal").style.display="flex";
+    }
+    window.abrirModal = abrirModal;
+  </script>
 </body>
 </html>
