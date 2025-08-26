@@ -163,7 +163,8 @@
                 <option ${p.status==="Em produção"?"selected":""}>Em produção</option>
                 <option ${p.status==="Saiu para entrega"?"selected":""}>Saiu para entrega</option>
                 <option ${p.status==="Saiu para instalação"?"selected":""}>Saiu para instalação</option>
-                <option ${p.status==="Entregue na loja"?"selected":""}>Entregue na loja</option>
+                <option ${p.status==="Pedido pronto para retirada na loja"?"selected":""}>Pedido pronto para retirada na loja</option>
+                <option ${p.status==="Instalação concluida pedido finalizado"?"selected":""}>Instalação concluida pedido finalizado</option>
               </select>
             </td>
             <td>${p.foto ? `<img src="${p.foto}" class="thumb" onclick="abrirModal('${p.foto}')">`:"-"}</td>
