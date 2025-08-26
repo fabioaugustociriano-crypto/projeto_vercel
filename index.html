@@ -3,113 +3,53 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Consulta de Pedidos - Saron Cortinas</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <title>Consulta de Pedido - Cliente</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
   <style>
-    body {
-      font-family:'Poppins',sans-serif;
-      background:linear-gradient(135deg,#b30000 0%,#444 100%);
-      margin:0; padding:0;
-      display:flex; justify-content:center; align-items:center;
-      min-height:100vh;
-      color:#333;
-    }
-    .card {
-      background:#fff;
-      padding:30px;
-      border-radius:15px;
-      box-shadow:0 6px 15px rgba(0,0,0,.15);
-      max-width:420px;
-      width:100%;
-      text-align:center;
-    }
-    h1 { margin:15px 0; color:#b30000; }
-    input {
-      width:100%; padding:12px; margin:8px 0;
-      border:1px solid #ccc; border-radius:8px; font-size:15px;
-    }
-    button {
-      padding:10px 15px; background:#b30000; border:none;
-      border-radius:8px; color:#fff; font-weight:600;
-      cursor:pointer; transition:0.3s;
-      width:100%; margin-top:10px;
-    }
-    button:hover { background:#800000; }
-    #resultado { margin-top:20px; text-align:left; }
-    #resultado img.thumb {
-      max-width:120px; border-radius:8px; margin-top:10px; cursor:pointer;
-    }
-    #resultado a.pdf-link {
-      display:block; margin-top:10px; font-weight:600; color:#b30000;
-      text-decoration:none;
-    }
-    #resultado a.pdf-link:hover { text-decoration:underline; }
-    footer {
-      margin-top:30px; font-size:13px; color:#555;
-    }
-    footer a { color:#b30000; text-decoration:none; font-weight:600; }
-    footer a:hover { text-decoration:underline; }
-    .logo { max-width:180px; }
-    /* Modal para zoom */
-    .modal {
-      display:none; position:fixed; z-index:1000; left:0; top:0;
-      width:100%; height:100%; background:rgba(0,0,0,0.8);
-      justify-content:center; align-items:center;
-    }
-    .modal img { max-width:90%; max-height:90%; border-radius:10px; }
+    body{font-family:Arial,Helvetica,sans-serif;background:#f6f8fb;color:#222;margin:0;padding:20px;text-align:center;}
+    header{margin-bottom:20px;}
+    .logo{max-width:250px;height:auto;display:block;margin:0 auto;}
+    .container{max-width:600px;margin:0 auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+    input,button{padding:10px;margin:10px 0;width:100%;border:1px solid #ccc;border-radius:8px;}
+    button{background:#b71c1c;color:#fff;font-weight:bold;cursor:pointer;}
+    button:hover{background:#8a1313;}
+    footer{margin-top:30px;font-size:14px;}
   </style>
 </head>
 <body>
-  <div class="card">
-    <img src="1.png" alt="Saron Cortinas" class="logo">
-    <h1>Consultar Pedido</h1>
-    <input type="text" id="nome" placeholder="Digite seu nome">
-    <input type="text" id="cpf" maxlength="4" placeholder="Últimos 4 dígitos do CPF">
-    <button onclick="consultar()">Consultar</button>
+  <header>
+    <img src="logo.jpg" alt="Saron Cortinas" class="logo" onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<h2>Saron Cortinas</h2>');">
+  </header>
 
+  <div class="container">
+    <h2>Consultar Pedido</h2>
+    <form id="consultaForm">
+      <input type="text" id="nomeCliente" placeholder="Digite seu nome" required>
+      <input type="text" id="cpfCliente" placeholder="Últimos 4 números do CPF" required>
+      <button type="submit">Consultar</button>
+    </form>
     <div id="resultado"></div>
-
-    <footer>
-      <p>⚙️ <a href="admin.html">Acesso do Dono</a></p>
-    </footer>
   </div>
 
-  <!-- Modal Zoom -->
-  <div id="modal" class="modal" onclick="this.style.display='none'">
-    <img id="modal-img" src="">
-  </div>
+  <footer>
+    <p><a href="admin.html">Acesso do Dono</a></p>
+  </footer>
 
   <script>
-    function consultar(){
-      const nome = document.getElementById("nome").value.trim();
-      const cpf = document.getElementById("cpf").value.trim();
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      const resultado = document.getElementById("resultado");
-
-      if(!nome || !cpf){
-        resultado.innerHTML = "<p style='color:red'>Preencha os dois campos!</p>";
-        return;
-      }
-
-      const pedido = pedidos.find(p=> p.nome.toLowerCase()===nome.toLowerCase() && p.cpf===cpf);
+    const pedidos = JSON.parse(localStorage.getItem("pedidos")) || [];
+    document.getElementById("consultaForm").addEventListener("submit", function(e){
+      e.preventDefault();
+      let nome = document.getElementById("nomeCliente").value.trim().toLowerCase();
+      let cpf = document.getElementById("cpfCliente").value.trim();
+      let pedido = pedidos.find(p => p.nome.toLowerCase() === nome && p.cpf === cpf);
+      let resultado = document.getElementById("resultado");
       if(pedido){
-        resultado.innerHTML = `
-          <p><strong>Cliente:</strong> ${pedido.nome}</p>
-          <p><strong>CPF:</strong> ****${pedido.cpf}</p>
-          <p><strong>Descrição:</strong> ${pedido.desc}</p>
-          <p><strong>Status:</strong> ${pedido.status}</p>
-          ${pedido.foto ? `<img src="${pedido.foto}" class="thumb" onclick="abrirModal('${pedido.foto}')">` : ""}
-          ${pedido.pdf ? `<a href="${pedido.pdf}" target="_blank" class="pdf-link">📄 Ver PDF</a>` : ""}
-        `;
+        resultado.innerHTML = `<p><strong>Status:</strong> ${pedido.status}</p>
+                               ${pedido.arquivo ? `<p>Arquivo: <a href="${pedido.arquivo}" target="_blank">Ver</a></p>` : ""}`;
       } else {
-        resultado.innerHTML = "<p style='color:red'>❌ Pedido não encontrado.</p>";
+        resultado.innerHTML = "<p>Pedido não encontrado.</p>";
       }
-    }
-
-    function abrirModal(src){
-      document.getElementById("modal-img").src = src;
-      document.getElementById("modal").style.display="flex";
-    }
+    });
   </script>
 </body>
 </html>
