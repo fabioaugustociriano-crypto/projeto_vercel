@@ -190,6 +190,7 @@
               <td>${p.foto ? `<img src="${p.foto}" class="thumb" onclick="abrirModal('${p.foto}')">`:"-"}</td>
               <td>${p.pdf ? `<a href="${p.pdf}" target="_blank" class="pdf-link">📄 PDF</a>`:"-"}</td>
               <td>
+                <button onclick="editar('${key}')">Editar</button>
                 <button onclick="remover('${key}')">Excluir</button>
               </td>
             </tr>`;
@@ -215,6 +216,43 @@
       document.getElementById("modal").style.display="flex";
     }
     window.abrirModal = abrirModal;
+
+    // ---- NOVO: função editar ----
+    function editar(id){
+      const novoDesc = prompt("Digite a nova descrição:");
+      if(novoDesc === null) return;
+
+      const fotoFile = document.getElementById("foto").files[0];
+      const pdfFile = document.getElementById("pdf").files[0];
+
+      let dadosAtualizados = { desc: novoDesc };
+
+      if(fotoFile){
+        const reader = new FileReader();
+        reader.onload = e => {
+          dadosAtualizados.foto = e.target.result;
+          update(ref(db, "pedidos/"+id), dadosAtualizados);
+          alert("Pedido atualizado!");
+        };
+        reader.readAsDataURL(fotoFile);
+        return;
+      }
+
+      if(pdfFile){
+        const reader = new FileReader();
+        reader.onload = e => {
+          dadosAtualizados.pdf = e.target.result;
+          update(ref(db, "pedidos/"+id), dadosAtualizados);
+          alert("Pedido atualizado!");
+        };
+        reader.readAsDataURL(pdfFile);
+        return;
+      }
+
+      update(ref(db, "pedidos/"+id), dadosAtualizados);
+      alert("Pedido atualizado!");
+    }
+    window.editar = editar;
   </script>
 </body>
 </html>
