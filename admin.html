@@ -24,6 +24,7 @@
       padding:10px 15px; background:#b30000; border:none;
       border-radius:8px; color:#fff; font-weight:600;
       cursor:pointer; transition:0.3s;
+      margin:2px;
     }
     button:hover { background:#800000; }
     table {
@@ -52,12 +53,14 @@
     <input type="password" id="senha" placeholder="Digite a senha" onkeyup="checkSenha(event)">
     <div id="painel" style="display:none">
       <h2>Criar Pedido</h2>
+      <input type="hidden" id="pedidoId">
       <input type="text" id="nome" placeholder="Nome do Cliente">
       <input type="text" id="cpf" maxlength="4" placeholder="Últimos 4 dígitos do CPF">
       <input type="text" id="desc" placeholder="Descrição do Pedido">
       <input type="file" id="foto" accept="image/*">
       <input type="file" id="pdf" accept="application/pdf">
       <button onclick="adicionar()">Adicionar Pedido</button>
+      <button onclick="salvarEdicao()" style="display:none" id="btnSalvar">Salvar Edição</button>
 
       <h2>Pedidos</h2>
       <table id="tabela">
@@ -199,6 +202,55 @@
     }
     window.listar = listar;
 
+    function editar(id,nome,cpf,desc){
+      document.getElementById("pedidoId").value = id;
+      document.getElementById("nome").value = nome;
+      document.getElementById("cpf").value = cpf;
+      document.getElementById("desc").value = desc;
+      document.getElementById("btnSalvar").style.display = "inline-block";
+    }
+    window.editar = editar;
+
+    function salvarEdicao(){
+      const id = document.getElementById("pedidoId").value;
+      if(!id){ alert("Nenhum pedido selecionado!"); return; }
+
+      const nome = document.getElementById("nome").value.trim();
+      const cpf = document.getElementById("cpf").value.trim();
+      const desc = document.getElementById("desc").value.trim();
+      const fotoFile = document.getElementById("foto").files[0];
+      const pdfFile = document.getElementById("pdf").files[0];
+
+      let pedidoAtualizado = {nome, cpf, desc};
+
+      if(fotoFile){
+        const reader = new FileReader();
+        reader.onload = e => {
+          pedidoAtualizado.foto = e.target.result;
+          atualizar(id,pedidoAtualizado);
+        };
+        reader.readAsDataURL(fotoFile);
+      } else if(pdfFile){
+        const reader = new FileReader();
+        reader.onload = e => {
+          pedidoAtualizado.pdf = e.target.result;
+          atualizar(id,pedidoAtualizado);
+        };
+        reader.readAsDataURL(pdfFile);
+      } else {
+        atualizar(id,pedidoAtualizado);
+      }
+    }
+    window.salvarEdicao = salvarEdicao;
+
+    function atualizar(id,dados){
+      const pedidoRef = ref(db,"pedidos/"+id);
+      update(pedidoRef,dados);
+      alert("Pedido atualizado!");
+      document.getElementById("btnSalvar").style.display="none";
+      document.getElementById("pedidoId").value="";
+    }
+
     function atualizarStatus(id,status){
       const pedidoRef = ref(db,"pedidos/"+id);
       update(pedidoRef,{status:status});
@@ -216,44 +268,6 @@
       document.getElementById("modal").style.display="flex";
     }
     window.abrirModal = abrirModal;
-
-    // NOVA FUNÇÃO DE EDITAR
-    function editar(id,nome,cpf,desc){
-      const novoNome = prompt("Editar Nome do Cliente:", nome);
-      const novoCpf = prompt("Editar últimos 4 dígitos do CPF:", cpf);
-      const novoDesc = prompt("Editar Descrição:", desc);
-
-      const fotoFile = document.getElementById("foto").files[0];
-      const pdfFile = document.getElementById("pdf").files[0];
-
-      let dadosAtualizados = {
-        nome: novoNome || nome,
-        cpf: novoCpf || cpf,
-        desc: novoDesc || desc
-      };
-
-      if(fotoFile){
-        const reader = new FileReader();
-        reader.onload = e => {
-          dadosAtualizados.foto = e.target.result;
-          const pedidoRef = ref(db,"pedidos/"+id);
-          update(pedidoRef,dadosAtualizados);
-        };
-        reader.readAsDataURL(fotoFile);
-      } else if(pdfFile){
-        const reader = new FileReader();
-        reader.onload = e => {
-          dadosAtualizados.pdf = e.target.result;
-          const pedidoRef = ref(db,"pedidos/"+id);
-          update(pedidoRef,dadosAtualizados);
-        };
-        reader.readAsDataURL(pdfFile);
-      } else {
-        const pedidoRef = ref(db,"pedidos/"+id);
-        update(pedidoRef,dadosAtualizados);
-      }
-    }
-    window.editar = editar;
   </script>
 </body>
 </html>
