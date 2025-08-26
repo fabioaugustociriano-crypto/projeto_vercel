@@ -39,18 +39,11 @@
     a.pdf-link:hover { text-decoration:underline; }
     .logo { display:block; margin:0 auto 15px auto; max-width:200px; }
     .modal {
-      display:none; position:fixed; z-index:2000; left:0; top:0;
+      display:none; position:fixed; z-index:1000; left:0; top:0;
       width:100%; height:100%; background:rgba(0,0,0,0.8);
       justify-content:center; align-items:center;
     }
-    .modal-content {
-      background:#fff; padding:20px; border-radius:12px;
-      max-width:500px; width:90%;
-    }
-    .modal h2 { margin-top:0; color:#b30000; }
-    .modal-close {
-      background:#777; margin-left:10px;
-    }
+    .modal img { max-width:90%; max-height:90%; border-radius:10px; }
   </style>
 </head>
 <body>
@@ -83,28 +76,30 @@
     </div>
   </div>
 
-  <!-- Modal Editar -->
-  <div id="editModal" class="modal" onclick="fecharModal(event)">
-    <div class="modal-content" onclick="event.stopPropagation()">
-      <h2>Editar Pedido</h2>
-      <input type="text" id="editNome" placeholder="Nome do Cliente">
-      <input type="text" id="editCpf" maxlength="4" placeholder="Últimos 4 dígitos do CPF">
-      <input type="text" id="editDesc" placeholder="Descrição do Pedido">
-      <label>Status:</label>
-      <select id="editStatus"></select>
-      <div id="editPreview"></div>
-      <input type="file" id="editFoto" accept="image/*">
-      <input type="file" id="editPdf" accept="application/pdf">
-      <div style="margin-top:10px;">
-        <button onclick="salvarEdicao()">Salvar</button>
-        <button class="modal-close" onclick="fecharModal()">Cancelar</button>
-      </div>
-    </div>
+  <!-- Modal Zoom -->
+  <div id="modal" class="modal" onclick="this.style.display='none'">
+    <img id="modal-img" src="">
   </div>
 
-  <script>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, set, get, child, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv_JfhkboDI7Iqo1tcV7hP2R94W5U-UFw",
+      authDomain: "saron-cortinas.firebaseapp.com",
+      databaseURL: "https://saron-cortinas-default-rtdb.firebaseio.com",
+      projectId: "saron-cortinas",
+      storageBucket: "saron-cortinas.firebasestorage.app",
+      messagingSenderId: "1004919070090",
+      appId: "1:1004919070090:web:6162c6accfe1d418cb7c73"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
     const senhaCorreta = "Batista2025";
-    let editIndex = null;
 
     function checkSenha(e){
       if(e.key === "Enter" || e.type === "click"){
@@ -118,6 +113,7 @@
         }
       }
     }
+    window.checkSenha = checkSenha;
 
     function adicionar(){
       const nome = document.getElementById("nome").value.trim();
@@ -133,140 +129,86 @@
 
       let pedido = {nome, cpf, desc, status:"Criado", foto:null, pdf:null};
 
+      const readerHandler = (file, cb) => {
+        const reader = new FileReader();
+        reader.onload = e => cb(e.target.result);
+        reader.readAsDataURL(file);
+      };
+
       if(fotoFile){
-        const reader = new FileReader();
-        reader.onload = e => {
-          pedido.foto = e.target.result;
-          salvar(pedido);
-        };
-        reader.readAsDataURL(fotoFile);
+        readerHandler(fotoFile, (data)=>{ pedido.foto = data; salvar(pedido); });
       } else if(pdfFile){
-        const reader = new FileReader();
-        reader.onload = e => {
-          pedido.pdf = e.target.result;
-          salvar(pedido);
-        };
-        reader.readAsDataURL(pdfFile);
+        readerHandler(pdfFile, (data)=>{ pedido.pdf = data; salvar(pedido); });
       } else {
         salvar(pedido);
       }
     }
+    window.adicionar = adicionar;
 
     function salvar(pedido){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      pedidos.push(pedido);
-      localStorage.setItem("pedidos", JSON.stringify(pedidos));
-      listar();
+      const pedidosRef = ref(db, "pedidos");
+      const novoRef = push(pedidosRef);
+      set(novoRef, pedido);
       alert("Pedido adicionado!");
     }
 
     function listar(){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
       const tabela = document.getElementById("tabela");
-      tabela.innerHTML = `
-        <tr>
-          <th>Cliente</th>
-          <th>CPF</th>
-          <th>Descrição</th>
-          <th>Status</th>
-          <th>Foto</th>
-          <th>PDF</th>
-          <th>Ações</th>
-        </tr>`;
-      pedidos.forEach((p,i)=>{
-        tabela.innerHTML += `
+      const pedidosRef = ref(db, "pedidos");
+
+      onValue(pedidosRef, (snapshot) => {
+        tabela.innerHTML = `
           <tr>
-            <td>${p.nome}</td>
-            <td>****${p.cpf}</td>
-            <td>${p.desc}</td>
-            <td>${p.status}</td>
-            <td>${p.foto ? `<img src="${p.foto}" class="thumb">`:"-"}</td>
-            <td>${p.pdf ? `<a href="${p.pdf}" target="_blank" class="pdf-link">📄 PDF</a>`:"-"}</td>
-            <td>
-              <button onclick="abrirEditar(${i})">Editar</button>
-              <button onclick="remover(${i})">Excluir</button>
-            </td>
+            <th>Cliente</th>
+            <th>CPF</th>
+            <th>Descrição</th>
+            <th>Status</th>
+            <th>Foto</th>
+            <th>PDF</th>
+            <th>Ações</th>
           </tr>`;
+        snapshot.forEach(childSnap=>{
+          const p = childSnap.val();
+          const key = childSnap.key;
+          tabela.innerHTML += `
+            <tr>
+              <td>${p.nome}</td>
+              <td>****${p.cpf}</td>
+              <td>${p.desc}</td>
+              <td>
+                <select onchange="atualizarStatus('${key}',this.value)">
+                  <option ${p.status==="Criado"?"selected":""}>Criado</option>
+                  <option ${p.status==="Em produção"?"selected":""}>Em produção</option>
+                  <option ${p.status==="Saiu para entrega"?"selected":""}>Saiu para entrega</option>
+                  <option ${p.status==="Saiu para instalação"?"selected":""}>Saiu para instalação</option>
+                  <option ${p.status==="Pedido pronto para retirada na loja"?"selected":""}>Pedido pronto para retirada na loja</option>
+                  <option ${p.status==="Instalação concluida pedido finalizado"?"selected":""}>Instalação concluida pedido finalizado</option>
+                </select>
+              </td>
+              <td>${p.foto ? `<img src="${p.foto}" class="thumb" onclick="abrirModal('${p.foto}')">`:"-"}</td>
+              <td>${p.pdf ? `<a href="${p.pdf}" target="_blank" class="pdf-link">📄 PDF</a>`:"-"}</td>
+              <td><button onclick="removerPedido('${key}')">Excluir</button></td>
+            </tr>`;
+        });
       });
     }
+    window.listar = listar;
 
-    function remover(i){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      pedidos.splice(i,1);
-      localStorage.setItem("pedidos", JSON.stringify(pedidos));
-      listar();
+    function atualizarStatus(id,status){
+      update(ref(db,"pedidos/"+id), {status});
     }
+    window.atualizarStatus = atualizarStatus;
 
-    // ----- Modal Editar -----
-    function abrirEditar(i){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      const p = pedidos[i];
-      editIndex = i;
-
-      document.getElementById("editNome").value = p.nome;
-      document.getElementById("editCpf").value = p.cpf;
-      document.getElementById("editDesc").value = p.desc;
-
-      const statusSel = document.getElementById("editStatus");
-      statusSel.innerHTML = `
-        <option ${p.status==="Criado"?"selected":""}>Criado</option>
-        <option ${p.status==="Em produção"?"selected":""}>Em produção</option>
-        <option ${p.status==="Saiu para entrega"?"selected":""}>Saiu para entrega</option>
-        <option ${p.status==="Saiu para instalação"?"selected":""}>Saiu para instalação</option>
-        <option ${p.status==="Pedido pronto para retirada na loja"?"selected":""}>Pedido pronto para retirada na loja</option>
-        <option ${p.status==="Instalação concluida pedido finalizado"?"selected":""}>Instalação concluida pedido finalizado</option>
-      `;
-
-      const preview = document.getElementById("editPreview");
-      preview.innerHTML = `
-        ${p.foto ? `<p><img src="${p.foto}" class="thumb"></p>`:""}
-        ${p.pdf ? `<p><a href="${p.pdf}" target="_blank" class="pdf-link">📄 PDF Atual</a></p>`:""}
-      `;
-
-      document.getElementById("editModal").style.display = "flex";
+    function removerPedido(id){
+      remove(ref(db,"pedidos/"+id));
     }
+    window.removerPedido = removerPedido;
 
-    function salvarEdicao(){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      const p = pedidos[editIndex];
-
-      p.nome = document.getElementById("editNome").value.trim();
-      p.cpf = document.getElementById("editCpf").value.trim();
-      p.desc = document.getElementById("editDesc").value.trim();
-      p.status = document.getElementById("editStatus").value;
-
-      const fotoFile = document.getElementById("editFoto").files[0];
-      const pdfFile = document.getElementById("editPdf").files[0];
-
-      if(fotoFile){
-        const reader = new FileReader();
-        reader.onload = e => {
-          p.foto = e.target.result;
-          salvarAlteracoes(pedidos);
-        };
-        reader.readAsDataURL(fotoFile);
-      } else if(pdfFile){
-        const reader = new FileReader();
-        reader.onload = e => {
-          p.pdf = e.target.result;
-          salvarAlteracoes(pedidos);
-        };
-        reader.readAsDataURL(pdfFile);
-      } else {
-        salvarAlteracoes(pedidos);
-      }
+    function abrirModal(src){
+      document.getElementById("modal-img").src = src;
+      document.getElementById("modal").style.display="flex";
     }
-
-    function salvarAlteracoes(pedidos){
-      localStorage.setItem("pedidos", JSON.stringify(pedidos));
-      listar();
-      fecharModal();
-      alert("Pedido atualizado!");
-    }
-
-    function fecharModal(){
-      document.getElementById("editModal").style.display="none";
-    }
+    window.abrirModal = abrirModal;
   </script>
 </body>
 </html>
