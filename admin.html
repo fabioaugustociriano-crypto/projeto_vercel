@@ -81,7 +81,24 @@
     <img id="modal-img" src="">
   </div>
 
-  <script>
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, push, set, get, child, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAv_JfhkboDI7Iqo1tcV7hP2R94W5U-UFw",
+      authDomain: "saron-cortinas.firebaseapp.com",
+      databaseURL: "https://saron-cortinas-default-rtdb.firebaseio.com",
+      projectId: "saron-cortinas",
+      storageBucket: "saron-cortinas.firebasestorage.app",
+      messagingSenderId: "1004919070090",
+      appId: "1:1004919070090:web:6162c6accfe1d418cb7c73"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
     const senhaCorreta = "Batista2025";
 
     function checkSenha(e){
@@ -96,6 +113,7 @@
         }
       }
     }
+    window.checkSenha = checkSenha;
 
     function adicionar(){
       const nome = document.getElementById("nome").value.trim();
@@ -111,86 +129,86 @@
 
       let pedido = {nome, cpf, desc, status:"Criado", foto:null, pdf:null};
 
+      const readerHandler = (file, cb) => {
+        const reader = new FileReader();
+        reader.onload = e => cb(e.target.result);
+        reader.readAsDataURL(file);
+      };
+
       if(fotoFile){
-        const reader = new FileReader();
-        reader.onload = e => {
-          pedido.foto = e.target.result;
-          salvar(pedido);
-        };
-        reader.readAsDataURL(fotoFile);
+        readerHandler(fotoFile, (data)=>{ pedido.foto = data; salvar(pedido); });
       } else if(pdfFile){
-        const reader = new FileReader();
-        reader.onload = e => {
-          pedido.pdf = e.target.result;
-          salvar(pedido);
-        };
-        reader.readAsDataURL(pdfFile);
+        readerHandler(pdfFile, (data)=>{ pedido.pdf = data; salvar(pedido); });
       } else {
         salvar(pedido);
       }
     }
+    window.adicionar = adicionar;
 
     function salvar(pedido){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      pedidos.push(pedido);
-      localStorage.setItem("pedidos", JSON.stringify(pedidos));
-      listar();
+      const pedidosRef = ref(db, "pedidos");
+      const novoRef = push(pedidosRef);
+      set(novoRef, pedido);
       alert("Pedido adicionado!");
     }
 
     function listar(){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
       const tabela = document.getElementById("tabela");
-      tabela.innerHTML = `
-        <tr>
-          <th>Cliente</th>
-          <th>CPF</th>
-          <th>Descrição</th>
-          <th>Status</th>
-          <th>Foto</th>
-          <th>PDF</th>
-          <th>Ações</th>
-        </tr>`;
-      pedidos.forEach((p,i)=>{
-        tabela.innerHTML += `
+      const pedidosRef = ref(db, "pedidos");
+
+      onValue(pedidosRef, (snapshot) => {
+        tabela.innerHTML = `
           <tr>
-            <td>${p.nome}</td>
-            <td>****${p.cpf}</td>
-            <td>${p.desc}</td>
-            <td>
-              <select onchange="atualizarStatus(${i},this.value)">
-                <option ${p.status==="Criado"?"selected":""}>Criado</option>
-                <option ${p.status==="Em produção"?"selected":""}>Em produção</option>
-                <option ${p.status==="Saiu para entrega"?"selected":""}>Saiu para entrega</option>
-                <option ${p.status==="Saiu para instalação"?"selected":""}>Saiu para instalação</option>
-                <option ${p.status==="Entregue na loja"?"selected":""}>Entregue na loja</option>
-              </select>
-            </td>
-            <td>${p.foto ? `<img src="${p.foto}" class="thumb" onclick="abrirModal('${p.foto}')">`:"-"}</td>
-            <td>${p.pdf ? `<a href="${p.pdf}" target="_blank" class="pdf-link">📄 PDF</a>`:"-"}</td>
-            <td><button onclick="remover(${i})">Excluir</button></td>
+            <th>Cliente</th>
+            <th>CPF</th>
+            <th>Descrição</th>
+            <th>Status</th>
+            <th>Foto</th>
+            <th>PDF</th>
+            <th>Ações</th>
           </tr>`;
+        snapshot.forEach(childSnap=>{
+          const p = childSnap.val();
+          const key = childSnap.key;
+          tabela.innerHTML += `
+            <tr>
+              <td>${p.nome}</td>
+              <td>****${p.cpf}</td>
+              <td>${p.desc}</td>
+              <td>
+                <select onchange="atualizarStatus('${key}',this.value)">
+                  <option ${p.status==="Criado"?"selected":""}>Criado</option>
+                  <option ${p.status==="Em produção"?"selected":""}>Em produção</option>
+                  <option ${p.status==="Saiu para entrega"?"selected":""}>Saiu para entrega</option>
+                  <option ${p.status==="Saiu para instalação"?"selected":""}>Saiu para instalação</option>
+                  <option ${p.status==="Pedido pronto para retirada na loja"?"selected":""}>Pedido pronto para retirada na loja</option>
+                  <option ${p.status==="Instalação concluida pedido finalizado"?"selected":""}>Instalação concluida pedido finalizado</option>
+                </select>
+              </td>
+              <td>${p.foto ? `<img src="${p.foto}" class="thumb" onclick="abrirModal('${p.foto}')">`:"-"}</td>
+              <td>${p.pdf ? `<a href="${p.pdf}" target="_blank" class="pdf-link">📄 PDF</a>`:"-"}</td>
+              <td><button onclick="removerPedido('${key}')">Excluir</button></td>
+            </tr>`;
+        });
       });
     }
+    window.listar = listar;
 
-    function atualizarStatus(i,status){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      pedidos[i].status = status;
-      localStorage.setItem("pedidos", JSON.stringify(pedidos));
-      listar();
+    function atualizarStatus(id,status){
+      update(ref(db,"pedidos/"+id), {status});
     }
+    window.atualizarStatus = atualizarStatus;
 
-    function remover(i){
-      const pedidos = JSON.parse(localStorage.getItem("pedidos")||"[]");
-      pedidos.splice(i,1);
-      localStorage.setItem("pedidos", JSON.stringify(pedidos));
-      listar();
+    function removerPedido(id){
+      remove(ref(db,"pedidos/"+id));
     }
+    window.removerPedido = removerPedido;
 
     function abrirModal(src){
       document.getElementById("modal-img").src = src;
       document.getElementById("modal").style.display="flex";
     }
+    window.abrirModal = abrirModal;
   </script>
 </body>
 </html>
